@@ -3,17 +3,12 @@ CC = gcc
 CFLAGS_GLIB = `pkg-config --cflags glib-2.0` `pkg-config --cflags gio-2.0`
 LFLAGS_GLIB = `pkg-config --libs glib-2.0` `pkg-config --libs gio-2.0`
 
-CFLAGS_GUI = `pkg-config --cflags gtk+-2.0` -g
-LFLAGS_GUI = `pkg-config --libs gtk+-2.0`
+CFLAGS = -std=gnu99 -pedantic -Wall -Werror -Isrc/ $(CFLAGS_GLIB) -O3 -DDUMP_INT -DDUMP_ALL
 
-CFLAGS = -std=gnu99 -pedantic -Wall -Werror -Isrc/ $(CFLAGS_GLIB) $(CFLAGS_GUI) -O3 -DDUMP_INT -DDUMP_ALL
-
-LFLAGS = -lSDL -lSDL_image $(LFLAGS_GLIB) $(LFLAGS_GUI)
+LFLAGS = -lSDL -lSDL_image $(LFLAGS_GLIB) 
 
 OBJECTS = bin/decode.o bin/memory.o bin/mmu.o bin/cpu.o bin/dump.o bin/interrupts.o bin/lookup.o bin/dma.o bin/pio.o bin/mkcontext.o
 OBJECTS_HW = bin/hw/vagc.o bin/hw/devm.o bin/hw/vkbc.o bin/hw/vtimer.o
-
-OBJECTS_GUI = bin/gui/win_main.o bin/gui/fragment_code.o bin/gui/fragment_registers.o bin/gui/fragment_cache.o bin/gui/fragment_stats.o bin/gui/fragment_stack.o bin/gui/fragment_log.o bin/gui/memory_inspector.o bin/gui/fragment_mem.o bin/gui/win_mem.o bin/gui/win_pd.o bin/gui/win_pt.o bin/gui/fragment_cache_inspect.o bin/gui/gui_helper.o
 
 COMMON_SRC = src/common/macros.h src/common/definitions.h src/common/rawdefs.h src/common/types.h Makefile 
 
@@ -68,54 +63,6 @@ bin/hw/vkbc.o: src/hw/vkbc.c src/hw/vkbc.h $(COMMON_SRC)
 bin/hw/vtimer.o: src/hw/vtimer.c src/hw/vtimer.h $(COMMON_SRC)
 	${CC} -c -o bin/hw/vtimer.o src/hw/vtimer.c $(CFLAGS) $(LFGLAS)
 
-bin/gui/fragment_registers.o: src/gui/fragment_registers.c src/gui/fragment_registers.h $(COMMON_SRC)
-	${CC} -c -o bin/gui/fragment_registers.o src/gui/fragment_registers.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/fragment_code.o: src/gui/fragment_code.c src/gui/fragment_code.h $(COMMON_SRC)
-	${CC} -c -o bin/gui/fragment_code.o src/gui/fragment_code.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/fragment_stats.o: src/gui/fragment_stats.c src/gui/fragment_stats.h $(COMMON_SRC)
-	${CC} -c -o bin/gui/fragment_stats.o src/gui/fragment_stats.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/fragment_cache.o: src/gui/fragment_cache.c src/gui/fragment_cache.h $(COMMON_SRC)
-	${CC} -c -o bin/gui/fragment_cache.o src/gui/fragment_cache.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/fragment_stack.o: src/gui/fragment_stack.c src/gui/fragment_stack.h $(COMMON_SRC)
-	${CC} -c -o bin/gui/fragment_stack.o src/gui/fragment_stack.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/fragment_log.o: src/gui/fragment_log.c src/gui/fragment_log.h $(COMMON_SRC)
-	${CC} -c -o bin/gui/fragment_log.o src/gui/fragment_log.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/fragment_cache_inspect.o: src/gui/fragment_cache_inspect.c src/gui/fragment_cache_inspect.h $(COMMON_SRC)
-	${CC} -c -o bin/gui/fragment_cache_inspect.o src/gui/fragment_cache_inspect.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/win_main.o: src/gui/win_main.c src/gui/win_main.h bin/mkcontext.o
-	${CC} -c -o bin/gui/win_main.o src/gui/win_main.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/memory_inspector.o: src/gui/memory_inspector.c src/gui/memory_inspector.h $(COMMON_SRC)
-	${CC} -c -o bin/gui/memory_inspector.o src/gui/memory_inspector.c $(CFLAGS) $(LFLAGS)
-
-bin/lib_vasmdis.o: src/disassembler/lib_vasmdis.c src/disassembler/lib_vasmdis.h
-	${CC} -c -o bin/lib_vasmdis.o src/disassembler/lib_vasmdis.c -Isrc/ $(CFLAGS_GLIB) $(LFLAGS_GLIB)
-
-bin/gui/win_mem.o: src/gui/win_mem.c src/gui/win_mem.h bin/mkcontext.o
-	${CC} -c -o bin/gui/win_mem.o src/gui/win_mem.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/fragment_mem.o: src/gui/fragment_mem.c src/gui/fragment_mem.h
-	${CC} -c -o bin/gui/fragment_mem.o src/gui/fragment_mem.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/win_pd.o: src/gui/win_pd.c src/gui/win_pd.h bin/mkcontext.o
-	${CC} -c -o bin/gui/win_pd.o src/gui/win_pd.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/win_pt.o: src/gui/win_pt.c src/gui/win_pt.h bin/mkcontext.o
-	${CC} -c -o bin/gui/win_pt.o src/gui/win_pt.c $(CFLAGS) $(LFLAGS)
-
-bin/gui/gui_helper.o: src/gui/gui_helper.c src/gui/gui_helper.h
-	${CC} -c -o bin/gui/gui_helper.o src/gui/gui_helper.c $(CFLAGS) $(LFGLAS)
-
-gui: $(OBJECTS_GUI) $(OBJECTS) $(OBJECTS_HW) bin/lib_vasmdis.o Makefile
-	${CC} -o gui $(OBJECTS_GUI) $(OBJECTS) $(OBJECTS_HW) bin/lib_vasmdis.o $(CFLAGS) $(LFLAGS)
-
 va: $(OBJECTS) $(OBJECTS_HW) bin/emulator.o bin/lib_vasmdis.o 
 	${CC} -o va bin/emulator.o $(OBJECTS) $(OBJECTS_HW) bin/lib_vasmdis.o $(CFLAGS) $(LFLAGS)
 
@@ -124,11 +71,6 @@ vasm: bin/lookup.o bin/emit.o src/assembler/vasm.l src/assembler/vasm.y
 	flex  --case-insensitive --yylineno -o bin/lex.y.c src/assembler/vasm.l
 	${CC} bin/vasm.tab.c bin/lex.y.c -lfl -o vasm bin/emit.o bin/lookup.o $(CFLAGS) $(LFLAGS) -lfl -Isrc/assembler/ -Wno-unused
 
-compiler: src/compiler/rlang.l src/compiler/rlang.y
-	bison --report=state --verbose -d src/compiler/rlang.y -o bin/rlang.tab.c -v -t
-	flex --yylineno -o bin/lex.y.c src/compiler/rlang.l
-	${CC} bin/rlang.tab.c bin/lex.y.c -lfl -o rlang $(CFLAGS) $(LFLAGS) -lfl -Isrc/compiler/ -Wno-unused
-
 vdis: bin/lib_vasmdis.o bin/lookup.o src/disassembler/vdis.c
 vdis: bin/lib_vasmdis.o bin/lookup.o src/disassembler/vdis.c src/disassembler/vdis.h
 	${CC} -o vdis src/disassembler/vdis.c bin/lib_vasmdis.o bin/lookup.o $(CFLAGS_GLIB) $(LFLAGS_GLIB) -Isrc/
@@ -136,10 +78,6 @@ vdis: bin/lib_vasmdis.o bin/lookup.o src/disassembler/vdis.c src/disassembler/vd
 .PHONY : tests-v
 tests-v: va vasm
 	./test.sh
-
-.PHONY : tests-r
-tests-r: va vasm compiler
-	./testrl.sh
 
 .PHONY : test-vasm
 test-vasm: va vasm vdis
@@ -158,7 +96,6 @@ clean:
 	-mkdir bin/tests
 	-mkdir bin/logs
 	-mkdir bin/hw
-	-mkdir bin/gui
 
 .PHONY : all
 all: clean va vasm tests-v
