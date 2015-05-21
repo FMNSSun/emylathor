@@ -1,0 +1,18 @@
+;Test for the XCHGC instruction
+
+	LOAD32	R0,	@0x02938
+	MOVTC	CR2,	R0
+	LOAD32	R1,	@0x09999
+	MOV	R3,	R1
+	MOV	R4,	R0
+	XCHGC	R1,	CR2
+	MOVFC	R5,	CR2
+	CMP	R5,	R3
+	FAILNZ	0x01
+	CMP	R1,	R4
+	FAILNZ 	0x02
+	
+	STOP
+	
+	
+	

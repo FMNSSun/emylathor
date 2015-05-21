@@ -1,0 +1,24 @@
+\section{Ports}
+
+VA supports up to 128 ports (0 - 127). All ports are 32 bit and therefore support reading and writing dwords. Some ports may choose to ignore
+read or write attempts. 
+
+\subsection{Port Map}
+
+Below is given the standard Port Map of VA. This Port Map may be extended (but not changed) by other hardware. A VA-compatible computer
+must at least support the standard Port Map. 
+
+\begin{tabular}{ | r | l | }
+	\hline
+	\textbf{Number} & \textbf{Description} \\
+	\hline
+	$00_{16}$ & This port allows to save a 32 bit value. \\
+                  & Every read attempt will return the value from the last write attempt. \\
+	\hline
+	$01_{16}$ & Keyboard Controller Port (vkbc) \\
+	\hline
+	$02_{16}$ & Timer Port (vtimer) \\
+	\hline
+	$10_{16}$ & Graphic Card Port (vagc) \\
+	\hline
+\end{tabular}

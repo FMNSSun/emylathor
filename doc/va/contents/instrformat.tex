@@ -1,0 +1,204 @@
+\section{Instruction format}
+
+All instructions have a fixed length of 32 bits where each instruction has a 2 bit prefix, a 6 bit op code and a 4 bit condition code. 
+
+\subsection{Prefixes}
+
+Prefixes specify the operand size or whether to use immediate data. The prefixes are: \\
+
+\begin{itemize}
+	\item 0x00 - DWORD prefix
+	\item 0x01 - WORD prefix
+	\item 0x02 - BYTE prefix
+	\item 0x03 - IMMEDIATE prefix
+\end{itemize}
+
+\subsection{Registers}
+
+A register is encoded using 4 bits. These registers are: \\
+
+\begin{itemize}
+	\item 0x00 - R0, R0L, R0LL, MR1
+	\item 0x01 - R1, R0H, R0LH, MR2
+	\item 0x02 - R2, R1L, R0HL, CR1
+	\item 0x03 - R3, R1H, R0HH, CR2
+	\item 0x04 - R4, R2L, R1LL, SSP
+	\item 0x05 - R5, R2H, R1LH, MR3
+	\item 0x06 - R6, R3L, R1HL, MR4
+	\item 0x07 - R7, R3H, R1HH
+	\item 0x08 - R8, R4L, R2LL
+	\item 0x09 - R9, R4H, R2LH
+	\item 0x0A - RA, R5L, R2HL
+	\item 0x0B - RB, R5H, R2HH
+	\item 0x0C - RC, R6L, R3LL
+	\item 0x0D - BP, R6h, R3LH
+	\item 0x0E - SP, R7L, R3HL
+	\item 0x0F - FLGS, R7H, R3HH
+\end{itemize}
+
+Due to the nature of the encoding not all registers are divided into byte or word registers. Only R0 - R3 are byte-accessible and only R0-R7 are word-accessible. 
+
+\newpage
+
+\subsection{Formats}
+
+These are all possible instruction formats. Some instructions may fall into different formats depending on their instruction prefix. 
+
+\stitle{Format I}
+
+\begin{tabular}{ | r | r | r | r |}
+	\hline
+	Prefix [2] & OpCode [6] & Condition [4] & Unused [20] \\
+	\hline
+\end{tabular} \\
+
+\stitle{Format II}
+
+\begin{tabular}{ | r | r | r | r | r | r | r | }
+	\hline
+	Prefix [2] & OpCode [6] & Condition [4] & Destination [4] & Operand A [4] & Operand B [4] & Unused [8] \\
+	\hline
+\end{tabular}
+
+\stitle{Format III}
+
+\begin{tabular}{ | r | r | r | r | r | r | }
+	\hline
+	Prefix [2] & OpCode [6] & Condition [4] & Destination [4] & Operand A [4] & Immediate [12] \\
+	\hline
+\end{tabular} \\
+
+\stitle{Format IV}
+
+\begin{tabular}{ | r | r | r | r | r | }
+	\hline
+	Prefix [2] & OpCode [6] & Condition [4] & Destination [4] & Immediate [16] \\
+	\hline
+\end{tabular} \\
+
+\stitle{Format V}
+
+\begin{tabular}{ | r | r | r | r | r | }
+	\hline
+	Prefix [2] & OpCode [6] & Condition [4] & Destination [4] & Unused [16] \\
+	\hline
+\end{tabular} \\
+
+\stitle{Format VI}
+
+\begin{tabular}{ | r | r | r | r | r | r | r | }
+	\hline
+	Prefix [2] & OpCode [6] & Condition [4] & Unused [4] & Operand A [4] & Operand B [4] & Unused [8] \\
+	\hline
+\end{tabular}
+
+\stitle{Format VII}
+
+\begin{tabular}{ | r | r | r | r | r | r | }
+	\hline
+	Prefix [2] & OpCode [6] & Condition [4] & Unused [4] & Operand A [4] & Immediate [12] \\
+	\hline
+\end{tabular} \\
+
+\stitle{Format VIII}
+
+\begin{tabular}{ | r | r | r | r | r | }
+	\hline
+	Prefix [2] & OpCode [6] & Condition [4] & Unused [4] & Immediate [16] \\
+	\hline
+\end{tabular} \\
+
+
+The decoding unit decodes every instruction the same way. However, some instructions may choose to ignore certain operands or ignore immediate data. 
+
+\newpage
+
+\subsubsection{Formats by instruction}
+
+\begin{tabular}{ | c | c | l | c | }
+	\hline                        
+	\textbf{Mnemonic} & \textbf{OpCode} & \textbf{Protection} & \textbf{Format} \\
+	\hline
+	STOP & 0x00 & Privileged & I\\
+	\hline
+	FAIL & 0x01 & Privileged & VIII\\
+	\hline
+	IRET & 0x04 & Unprivileged & I\\
+	\hline                        
+	LOADI & 0x06 & Unprivileged & IV \\
+	\hline
+	SKIP & 0x07 & Unprivileged & IV \\
+	\hline
+	STOREMA & 0x08 & Unprivileged & IV \\
+	\hline
+	LOADMA & 0x09 & Unprivileged & IV \\
+	\hline
+	INT & 0x0A & Unprivileged (with limitations) & VIII\\
+	\hline
+	JMP & 0x0B & Unprivileged & V / VIII \\
+	\hline
+	CALL & 0x0C & Unprivileged & V / VIII \\
+	\hline
+	STOREAS & 0x0D & Privileged & V \\
+	\hline
+	LOADAS & 0x0E & Privileged & V \\
+	\hline
+	SMUL & 0x10 & Unprivileged & II / III\\
+	\hline
+	SDIV & 0x11 & Unprivileged & II / III\\
+	\hline
+	NOT & 0x12 & Unprivileged & VI\\
+	\hline
+	SEX & 0x14 & Unprivileged & VI\\
+	\hline
+	MOD & 0x15 & Unprivileged & II \\
+	\hline
+	TEST & 0x16 & Unprivileged & V / VIII\\
+	\hline
+	CMP & 0x18 & Unprivileged & VI / VII\\
+	\hline
+	IN & 0x19 & Privileged &  VI \\
+	\hline
+	MOV & 0x1A & Unprivileged & VI\\
+	\hline
+	CMPXCHG	& 0x1B & Unprivileged & II\\
+	\hline
+	MOVTC & 0x1D & Privileged & VI \\
+	\hline
+	MOVFC & 0x1E & Privileged & VI \\
+	\hline
+	SAR & 0x1F & Unprivileged & II / III\\
+	\hline
+	XCHG & 0x20 & Unprivileged & VI\\
+	\hline
+	AND & 0x21 & Unprivileged & II / III\\
+	\hline
+	OR & 0x22 & Unprivileged & II / III\\
+	\hline
+	XOR & 0x23 & Unprivileged & II / III\\
+	\hline
+	SHL & 0x24 & Unprivileged & II / III\\
+	\hline
+	SHR & 0x25 & Unprivileged & II / III\\
+	\hline
+	LOADID & 0x26 & Unprivileged & III \\
+	\hline
+	LOADRD & 0x27 & Unprivileged & II \\
+	\hline
+	STOREID & 0x28 & Unprivileged & III \\
+	\hline
+	STORERD & 0x29 & Unprivileged & II \\
+	\hline
+	ADD & 0x2A & Unprivileged & II / III\\
+	\hline
+	SUB & 0x2B & Unprivileged & II / III\\
+	\hline
+	MUL & 0x2C & Unprivileged & II / III\\
+	\hline
+	DIV & 0x2D & Unprivileged & II / III\\
+	\hline
+	OUT & 0x2E & Privileged & VI\\
+	\hline
+	XCHGC & 0x2F & Privileged & VI \\
+	\hline
+\end{tabular}

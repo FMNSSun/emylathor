@@ -1,0 +1,15 @@
+; Tests the OR instruction
+	LOAD32	R0, @17000
+	LOAD32	R1, @15033
+	OR	R3, R0, R1
+	LOAD32	R2, @31481
+	CMP	R2, R3
+	FAILNZ	0x01
+
+	; or with immediate
+	OR	R3, R0, 2
+	LOAD32	R2, @17002
+	CMP	R2, R3
+	FAILNZ	0x02
+
+	STOP

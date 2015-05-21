@@ -1,0 +1,60 @@
+;Test for LOADI
+	; 16 Bit loading
+	LOADI	R0L,	0x1234
+	LOADI	R0H,	0x5678
+	LOAD32	R1,	@0x56781234
+	CMP	R1,	R0
+	FAILNZ	0x01
+	
+	; test without using LOAD32 (because load32 depends on loadi)
+	XOR	R0,	R0,	R0
+	LOADI	R0L,	0x1234
+	LOADI	R0H,	0x5678
+	XOR	R4,	R4,	R4
+	XOR	R1,	R1,	R1
+	XOR	R2,	R2,	R2
+	XOR	R3,	R3,	R3
+	OR	R4,	R4,	0x12
+	OR	R1,	R1,	0x34
+	OR	R2,	R2,	0x56
+	OR	R3,	R3,	0x78
+	SHL	R4,	R4,	8
+	SHL	R2,	R2,	24
+	SHL	R3,	R3,	16
+	OR	R4,	R4,	R1
+	OR	R4,	R4,	R2
+	OR	R4,	R4,	R3
+	CMP	R0,	R4
+	FAILNZ	0x02
+	
+	; 8 Bit loading
+	LOADI	R0LL,	0x12
+	LOADI	R0LH,	0x34
+	LOADI	R0HL,	0x56
+	LOADI	R0HH,	0x78
+	LOAD32	R1,	@0x78563412
+	CMP	R1,	R0
+	FAILNZ	0x03
+	
+	; test without using LOAD32 (because load32 depends on loadi)
+	XOR	R0,	R0,	R0
+	LOADI	R0LL,	0x12
+	LOADI	R0LH,	0x34
+	LOADI	R0HL,	0x56
+	LOADI	R0HH,	0x78
+	XOR	R4,	R4,	R4
+	XOR	R1,	R1,	R1
+	XOR	R2,	R2,	R2
+	XOR	R3,	R3,	R3
+	OR	R4,	R4,	0x12
+	OR	R1,	R1,	0x34
+	OR	R2,	R2,	0x56
+	OR	R3,	R3,	0x78
+	SHL	R1,	R1,	8
+	SHL	R2,	R2,	16
+	SHL	R3,	R3,	24
+	OR	R4,	R4,	R1
+	OR	R4,	R4,	R2
+	OR	R4,	R4,	R3
+	CMP	R0,	R4
+	FAILNZ	0x04

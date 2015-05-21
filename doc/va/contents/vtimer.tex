@@ -1,0 +1,21 @@
+\subsection{vtimer}
+
+The vtimer is a timer capable of periodically firing an interrupt (HW-Int. No. 2). It can be programmed to wait a certain delay in milliseconds
+between two interrupts (therefore the resolution is 1ms). The timer can be enabled and disabled. If the timer is disabled
+it will not attempt to fire an interrupt. If the timer is disabled it will continue to run and therefore the exact state the timer is in
+is undefined. If the timer is enabled and has a delay set of 10ms it might fire the next interrupt anywhere between 0 and 10ms (however, all following
+interrupts are fired every 10ms) (thus the time between when the timer is enabled and the next interrupt fires is undefined). 
+
+\subsubsection{Setting the delay}
+
+The delay can be set by writing to port $2$. The current programmed delay can be read by reading from port $2$. $0$ is not a valid delay.
+
+\subsubsection{Enabling/Disabling the timer}
+
+When a zero is written to the timer port the timer will treat the next write to its port as a command. \\
+
+\textbf{Commands:}
+\begin{itemize}
+	\item $01_{16}$ - Enable Timer
+	\item $02_{16}$ - Disable Timer
+\end{itemize}

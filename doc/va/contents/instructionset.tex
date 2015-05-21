@@ -1,0 +1,644 @@
+\section{Instruction set}
+
+\stitle{Mnemonics}
+
+\begin{verbatim}
+reg32, reg16, reg8: A regular register. 
+                   Treated as unsigned.
+reg32/s, reg16/s, reg8/s: A regular register. 
+                          Treated as signed.
+imm12, imm16: Immediate 12 bit data or immediate 16 bit data.
+              Treated as unsigned.
+imm12/s, imm16/s: Immediate 12 bit data or immediate 16 bit data. 
+                  Treated as signed.
+reg32/m: A 32 bit register. 
+         Treated as a pointer to a memory location.
+\end{verbatim}
+
+Instruction prefixes are given in square-brackets. Using an instruction with an undefined prefix will result in undefined behaviour.
+
+\subsection{Condition Codes}
+
+\begin{itemize}
+	\item ALWAYS ($00_{16}$) - The instruction is executed unconditionally (this is the default condition).
+	\item IZ ($01_{16}$) - The instruction is executed if the Zero Flag is set.
+	\item NZ ($02_{16}$) - The instruction is executed if the Zero Flag is not set.
+	\item IS ($03_{16}$) - The instruction is executed if the Sign Flag is set.
+	\item NS ($04_{16}$) - The instruction is executed if the Sign Flag is not set.
+	\item IO ($05_{16}$) - The instruction is executed if the Overflow Flag is set.
+	\item NO ($06_{16}$) - The instruction is executed if the Overflow Flag is not set.
+	\item IP ($07_{16}$) - The instruction is executed if the Parity Flag is set.
+	\item NP ($08_{16}$) - The instruction is executed if the Parity Flag is not set.
+	\item IZIS ($09_{16}$) - The instruction is executed if the Zero Flag or the Sign Flag is set.
+	\item IZIC ($0A_{16}$) - The instruction is executed if the Zero Flag or the Carry Flag is set.
+	\item NZNS ($0B_{16}$) - The instruction is executed if the Zero Flag and the Sign Flag are not set.
+	\item NZNC ($0C_{16}$) - The instruction is executed if the Zero Flag and the Carry Flage are not set.
+	\item IC ($0D_{16}$) - The instruction is executed if the Carry Flag is set.
+	\item NC ($0E_{16}$) - The instruction is executed if the Carry Flag is not set.
+	\item NF ($0F_{16}$) - The instruction is executed if no Flag is set.
+\end{itemize}
+
+Values in parentheses specify with which value the condition code is encoded in an instruction. 
+
+\subsection{Instructions}
+
+\subsubsection{ADD (Addition)}
+
+\begin{verbatim}
+ADD reg32, reg32, reg32 [DWORD]
+ADD reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a + b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs an addition of the source operands and writes the result back to the destination operand. This instruction
+handles unsigned and signed numbers.
+
+\stitle{Flags effected}
+
+\begin{itemize}
+    \item C - If an arithmetic carry occurs.
+    \item O - If a signed overflow occurs.
+\end{itemize}
+
+\subsubsection{AND (Bitwise And)}
+
+\begin{verbatim}
+AND reg32, reg32, reg32 [DWORD]
+AND reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a & b
+\end{verbatim}
+
+\stitle{Description}
+
+This instruction performs a bitwise and of the source operands.
+
+\subsubsection{CALL (Call Procedure)}
+
+\begin{verbatim}
+CALL reg32 [DWORD]
+CALL imm16/s [IMMEDIATE]
+
+PSEUDO := RC = pos; pos = dst; / RC = pos; pos += imm16
+\end{verbatim}
+
+\stitle{Description}
+
+Calls a procedure at the address given in the destination operand. Immediate calls are relative to the instruction pointer. The instruction pointer
+is saved inside the RC register. 
+
+\subsubsection{CMP (Compare)}
+
+\begin{verbatim}
+CMP reg32, reg32 [DWORD]
+CMP reg32, imm12 [IMMEDIATE]
+\end{verbatim}
+
+\stitle{Description}
+
+Compares two values and sets the flag to indicate the result of the comparison. Please see "Flags effected".
+
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item   Z - If a = b
+        \item   C - If a < b (unsigned comparison)
+        \item   S - If a < b (signed comparison)
+\end{itemize}
+
+\subsubsection{CMPXCHG (Compare and Exchange)}
+
+\begin{verbatim}
+CMP reg32/m, reg32, reg32 [DWORD]
+
+PSEUDO :=
+if memory[dst] == a then
+   memory[dst] = b;
+else
+   a = memory[dst]
+end if
+\end{verbatim}
+
+\stitle{Description}
+
+The value in memory which is provided by the destination register is compared to the value in the register of operand A. If they are equal, the value in the register specified by the operand B is written to memory. If not, the value in memory is written in the register of operand A.
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item   Z - If memory[dst] = a
+\end{itemize}
+
+\subsubsection{DIV (Divide)}
+
+\begin{verbatim}
+DIV reg32, reg32, reg32 [DWORD]
+DIV reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a / b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs a division of the source operands and writes the result to the destination operand.
+
+\stitle{Exceptions}
+
+Division by zero is not permitted and therefore fires a division by zero exception.
+
+
+\subsubsection{FAIL (Fail) }
+
+\begin{verbatim}
+FAIL imm16 [IMMEDIATE]
+\end{verbatim}
+
+\stitle{Description}
+
+This instruction causes the CPU to stop execution and terminate. (Debug instruction)
+
+\stitle{Mode}
+
+This instruction is not for use in unprivileged mode.
+
+\subsubsection{INT (Interrupt)}
+
+\begin{verbatim}
+INT imm16 [IMMEDIATE]
+
+\end{verbatim}
+
+\stitle{Description}
+
+Fires an interrupt with imm8 as the interrupt number to be fired. Firing hardware interrupts or exceptions is illegal and will fire an illegal opcode exception.
+More information about interrupts in section~\elref{sec:interrupts}.
+
+\subsubsection{IRET (Interrupt Return)}
+
+\begin{verbatim}
+IRET [DWORD]
+\end{verbatim}
+
+\stitle{Description}
+
+Returns from an interrupt service routine. More information about interrupts in section~\elref{sec:interrupts}.
+
+\subsubsection{JMP (Jump To)}
+
+\begin{verbatim}
+JMP reg32 [DWORD]
+JMP imm16/s [IMMEDIATE]
+
+PSEUDO := pos = dst/ pos += imm16
+\end{verbatim}
+
+\stitle{Description}
+
+Jumps to the address given in the destination operand. Immediate jumps are relative to the instruction pointer.
+
+\subsubsection{LOADAS (Load with Adjust System)}
+
+\begin{verbatim}
+LOADAS reg32 [IMMEDIATE]
+
+PSEUDO := ssp += 4; dst = memory[ssp];
+\end{verbatim}
+
+\stitle{Description}
+
+Loads a register from memory and adjusts SSP.
+
+\subsubsection{LOADI (Load Immediate)}
+
+\begin{verbatim}
+LOADI reg8, imm16 [BYTE]
+LOADI reg16, imm16 [WORD]
+
+PSEUDO := dst = imm16
+\end{verbatim}
+
+\stitle{Description}
+
+This instruction is the only instruction capable of loading immediate data into a register. If an immediate load to
+a 8 bit register the 16 bit immediate data is truncated to 8 bit (lower bits).
+
+\subsubsection{LOADID (Load with immediate displacement)}
+
+\begin{verbatim}
+LOADID reg32, reg32/m, imm12 [DWORD]
+LOADID reg16, reg32/m, imm12 [WORD]
+LOADID reg8,  reg32/m, imm12 [BYTE] 
+
+PSEUDO := dst = memory[a + b]
+\end{verbatim}
+
+\stitle{Description}
+
+Loads a value from memory into a register. The target register is the destination operand, the memory address is the source operand A and
+the immediate displacement is encoded as the source operand B. Therefore, this instruction allows a 12bit unsigned displacement. 
+
+\subsubsection{LOADMA (Load Multiple with Adjust)}
+
+\begin{verbatim}
+LOADMA reg32/m, imm16 [IMMEDIATE]
+
+PSEUDO := for(reg = end; reg >= start; reg = next_reg) 
+ { dst += 4; memory[dst] = reg; }
+\end{verbatim}
+
+\stitle{Description}
+
+Loads multiple registers from memory and adjusts the address in the destination operand accordingly. The registers
+to load are encoded in the immediate 8 bit data. The high nibble is the start register and the low nibble is the end register (therefore
+0x35 refers to R3,R4, and R5; 0x0F would refer to all registers). For each register the destination operand is increased by 4. The destination
+operand is updated after the instruction was executed. 
+
+\stitle{Safety}
+
+This instruction can be interrupted by a page fault. Data read or written is not undone. If a page fault occurs the data might be incomplete. 
+
+\stitle{Example}
+
+\begin{verbatim}
+XOR     R0, R0, R0
+LOADI   R0LL, 192 ; R0 = 192
+LOADMA  R0, 0x12  ; loads R1 and R2
+                  ; R0 = 1200
+\end{verbatim}
+
+\subsubsection{LOADRD (Load with Register Displacement)}
+
+\begin{verbatim}
+LOADRD reg32, reg32/m, reg32/s [DWORD]
+LOADRD reg16, reg32/m, reg32/s [WORD]
+LOADRD reg8,  reg32/m, reg32/s [BYTE] 
+
+PSEUDO := dst = memory[a + b]
+\end{verbatim}
+
+\stitle{Description}
+
+Loads a value from memory into a register. The target register is the destination operand, the memory address is the operand $a$ and
+the displacement is the operand $b$. The displacement is treated as signed.
+
+
+\subsubsection{MOD (Modulo)}
+
+\begin{verbatim}
+MOD reg32, reg32, reg32 [DWORD]
+
+PSEUDO := dst = a mod b
+\end{verbatim}
+
+\stitle{Description}
+
+Computes $a$ modulo $b$ and writes the result into the destination register. Unsigned modulo. 
+
+
+\subsubsection{MOV (Move)}
+
+\begin{verbatim}
+MOV reg32, reg32 [DWORD]
+MOV reg16, reg16 [WORD]
+MOV reg8, reg8 [BYTE]
+
+PSEUDO := a = b
+\end{verbatim}
+
+\stitle{Description}
+
+Copies operand $a$ into the operand $b$.
+
+\subsubsection{MOVFC (Move From Control Register)}
+
+\begin{verbatim}
+MOVFC reg32, creg [DWORD]
+
+PSEUDO := a = b
+\end{verbatim}
+
+\stitle{Description}
+
+Reads from a control register into a main register.
+
+\stitle{Example}
+
+\begin{verbatim}
+        MOVFC   R0, MR1
+\end{verbatim}
+
+\subsubsection{MOVTC (Move To Control Register)}
+
+\begin{verbatim}
+MOVFC creg, reg32 [DWORD]
+
+PSEUDO := a = b
+\end{verbatim}
+
+\stitle{Description}
+
+Writes from a main register into a control register.
+
+\stitle{Example}
+
+\begin{verbatim}
+        MOVTC   MR1, R0
+\end{verbatim}
+
+\subsubsection{MUL (Multiply)}
+
+\begin{verbatim}
+MUL reg32, reg32, reg32 [DWORD]
+MUL reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a * b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs a multiplication of the source operands and writes the result to the destination operand.
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item   C - If the result does not fit into 32 bits
+\end{itemize}
+
+\subsubsection{NOT (Bitwise Not)}
+
+\begin{verbatim}
+NOT reg32, reg32 [DWORD]
+
+PSEUDO := a = ~b
+\end{verbatim}
+
+\stitle{Description}
+
+This instruction performs a bitwise not of the destination operand.
+
+\subsubsection{OR (Bitwise Or)}
+
+\begin{verbatim}
+OR reg32, reg32, reg32 [DWORD]
+OR reg32, reg32, imm12 [IMMEDIATE]
+PSEUDO := dst = a | b
+\end{verbatim}
+
+\stitle{Description}
+
+This instruction performs a bitwise or of the source operands.
+
+\subsubsection{SDIV (Signed Divide)}
+
+\begin{verbatim}
+SDIV reg32, reg32, reg32 [DWORD]
+SDIV reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a / b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs a signed division of the source operands and writes the result to the destination operand. Dividing by zero will fire a division by zero exception.
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item   O - If the result does not fit into 32 bit two's complement. The result of the division is zero in this case.
+\end{itemize}
+
+\subsubsection{SEX (Sign extension)}
+
+\begin{verbatim}
+SEX reg32, reg16 [WORD]
+SEX reg32, reg8 [BYTE]
+
+PSEUDO := a = sign extended b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs a sign extension (Two's complement) of the operand b and writes the result to operand a. 
+
+
+\subsubsection{SHL (Shift Left)}
+
+\begin{verbatim}
+SHL reg32, reg32, reg32 [DWORD]
+SHL reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a << b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs a bit shift to the left.
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item   C - If the leftmost bit (most significant bit) was set before performing the shift
+\end{itemize}
+
+\subsubsection{SHR (Shift Right)}
+
+\begin{verbatim}
+SHR reg32, reg32, reg32 [DWORD]
+SHR reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a >> b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs a bit shift to the right.
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item   C - If the rightmost bit (least significant bit) was set before performing the shift
+\end{itemize}
+
+\subsubsection{SMUL (Signed Multiply)}
+
+\begin{verbatim}
+SMUL reg32, reg32, reg32 [DWORD]
+SMUL reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a * b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs a signed multiplication of the source operands and writes the result to the destination operand.
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item   O - If the result exceeds the 32 bit signed integer range
+\end{itemize}
+
+
+\subsubsection{STOP (Stop) }
+
+\begin{verbatim}
+STOP [DWORD]
+\end{verbatim}
+
+\stitle{Description}
+
+This instruction causes the CPU to stop execution and terminate. 
+
+\stitle{Mode}
+
+This instruction is not for use in unprivileged mode.
+
+\subsubsection{STOREAS (Store with Adjust System)}
+
+\begin{verbatim}
+LOADAS reg32 [IMMEDIATE]
+
+PSEUDO := memory[ssp] = dst; ssp -= 4;
+\end{verbatim}
+
+\stitle{Description}
+
+Stores a register to memory and adjusts SSP.
+
+\subsubsection{STOREID (Store with immediate displacement)}
+
+\begin{verbatim}
+STOREID reg32/m, reg32, imm12 [DWORD]
+STOREID reg32/m, reg16, imm12 [WORD]
+STOREID reg32/m, reg8,  imm12 [BYTE]
+
+PSEUDO := memory[dst + b] = a
+\end{verbatim}
+
+\stitle{Description}
+
+Stores a value from a register in memory. The memory address is the destination operand, the register is the source operand A and
+the immediate displacement is encoded as the source operand B. Therefore, this instruction only allows a mere 4bit displacement. 
+
+\subsubsection{STOREMA (Store Multiple with Adjust)}
+
+\begin{verbatim}
+STOREMA reg32/m, imm16 [IMMEDIATE]
+
+PSEUDO := for(reg = start; reg <= end; reg = next_reg)
+ { memory[dst] = reg; dst -= 4; }
+\end{verbatim}
+
+\stitle{Description}
+
+Stores multiple registers to a location in memory and adjusts the address in the destination operand accordingly. The registers
+to store are encoded in the immediate 8 bit data. The high nibble is the start register and the low nibble is the end register (therefore
+0x35 refers to R3,R4, and R5; 0x0F would refer to all registers). For each register the destination operand is decreased by 4. The destination operand
+is updated after the instruction was executed. 
+
+\stitle{Safety}
+
+This instruction can be interrupted by a page fault. Data read or written is not undone. If a page fault occurs the data might be incomplete. 
+
+\stitle{Example}
+
+\begin{verbatim}
+XOR     R0, R0, R0
+LOADI   R0LL, 200 ; R0 = 200
+STOREMA R0, 0x12  ; stores R1 and R2
+                  ; R0 = 192
+\end{verbatim}
+
+\subsubsection{STORERD (Store with Register Displacement)}
+
+\begin{verbatim}
+STORERD reg32/m, reg32, reg32/s [DWORD]
+STORERD reg32/m, reg16, reg32/s [WORD]
+STORERD reg32/m, reg8, reg32/s [BYTE]
+\end{verbatim}
+
+\stitle{Description}
+
+Stores a value from a register in memory. The memory address is the destination operand, the register is the operand A and
+the displacement is the operand B and is treated as a signed 32 bit value.
+
+\subsubsection{SUB (Subtraction)}
+
+\begin{verbatim}
+SUB reg32, reg32, reg32 [DWORD]
+SUB reg32, reg32, imm12 [IMMEDIATE]
+
+PSEUDO := dst = a - b
+\end{verbatim}
+
+\stitle{Description}
+
+Performs a subtraction of the source operands (subtracts operand b from operand a) and writes the result back to the destination operand. This instruction
+handles unsigned and signed numbers.
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item C - If an arithmetic carry (usually referred to as borrow when subtracting) occurs.
+        \item O - If a signed overflow occurs.
+\end{itemize}
+
+\subsubsection{TEST (Test and Set Flags)}
+
+\begin{verbatim}
+TEST reg32 [DWORD]
+TEST imm16 [IMMEDIATE]
+\end{verbatim}
+
+\stitle{Description}
+
+This instruction tests the flags against a register. That is, it sets the flags according to the contents of the register. Immediate data is treated as unsigned. 
+
+\stitle{Flags effected}
+
+\begin{itemize}
+        \item Z - Zero flag is set if the register contains zero
+        \item S - Signed flag is set if the register contains a signed number (if it is negative)
+        \item P - Parity flag is set if there are an odd number of bits set in the register
+        \item E - Even flag is set if the number is even (if its last bit is set)
+\end{itemize}
+
+\subsubsection{XCHG (Exchange)}
+
+\begin{verbatim}
+XCHG reg32, reg32 [DWORD]
+
+PSEUDO := temp = b; b = a; a = b;
+\end{verbatim}
+
+\stitle{Description}
+
+Exchanges (or swaps) the operands.
+
+\subsubsection{XCHGC (Exchange with control register)}
+
+\begin{verbatim}
+XCHG reg32, creg [DWORD]
+
+PSEUDO := temp = b; b = a; a = b;
+\end{verbatim}
+
+\stitle{Description}
+
+Exchanges (or swaps) the register with the control register.
+
+\subsubsection{XOR (Bitwise Xor)}
+
+\begin{verbatim}
+XOR reg32, reg32, reg32 [DWORD]
+XOR reg32, reg32, imm12 [IMMEDIATE]
+PSEUDO := dst = a ^ b
+\end{verbatim}
+
+\stitle{Description}
+
+This instruction performs a bitwise xor of the source operands.

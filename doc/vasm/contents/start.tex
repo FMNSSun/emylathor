@@ -1,0 +1,250 @@
+\section{VASM}
+
+VASM is the official assembler shipped together with \emph{emulathor}. 
+
+\section{Invoking VASM}
+
+VASM requires at least an input file and an output file. To assemble a file the following command line is usually enough:
+\verb|./vasm -v input.V -i output.img|. To create an image file with a fixed size an additional parameter may be given:
+\verb|./vasm -v input.V -i output.img -f 1024| (create an image file with 1KB in size). VASM will abort with an error if the image file
+grows over the specified fixed size. 
+
+\section{Images}
+
+VASM produces binary image files that can be directly loaded by an emulator.
+These images files consist of raw binary instruction data. 
+
+\section{Syntax}
+
+The syntax is case-insensitive. 
+
+\subsection{Comments}
+
+The start of a comment is indicated by a semicolon \verb|;|. A comment is automatically terminated by a newline (and can not be terminated else). 
+
+\subsection{OpCodes}
+
+VASM uses the official OpCode Mnemonic as used in the official VA Documentation. 
+
+\subsection{Operands}
+
+\subsubsection{Registers}
+
+VASM also uses the official Register Mnemonic as used in the official VA Documentation. VASM will detect usage of 8 bit or 16 bit registers
+and automatically assume the corresponding Instruction Prefix to specify the operand size. If the instruction does not support the given operand size
+VASM will abort with an error.
+
+\begin{verbatim}
+loadid r0, r1, 4
+loadid r0l, r1, 4
+loadid r0ll, r1, 4
+\end{verbatim}
+
+\subsubsection{Immediate Data}
+
+\elparagraph{32 bit}
+
+32 bit Immediate Data may either be specified in Hex Format or Integer Format. For Integer Format 32 bit Immediate Data requires an \verb|@| prefix.
+For Hex Format this prefix is only required if not exactly eight hexadecimal digits are given. If Hex Format is used the Immediate Data is treated
+unsigned else it is treated as a signed integer. 
+
+\begin{verbatim}
+load32 r0, @1232
+load32 r1, 0x12345678
+load32 r2, @0x123
+\end{verbatim}
+
+\elparagraph{16 bit}
+
+16 bit Immediate Data may either be specified in Hex Format or Integer Format. If Hex Format is used the Immediate Data is treated
+unsigned else it is treated as a signed integer.
+
+\begin{verbatim}
+call -12
+call 0x12
+\end{verbatim}
+
+\elparagraph{12 bit}
+
+12 bit Immediate Data must be specified as 16 bit Immediate Data which is later truncated by VASM to 12 bit Immediate Data. 12 bit Immediate Data is
+always treated as unsigned.
+
+\begin{verbatim}
+add r0, r0, 5
+\end{verbatim}
+
+\subsubsection{Register Ranges}
+
+VASM supports Register Ranges which are internally converted to 16 bit Integers. The syntax for Register Ranges is \verb|reg32:reg32|. It is allowed
+to use Register Ranges everywhere where a 16 bit Integer is accepted. 
+
+\begin{verbatim}
+storema sp, r0:r5
+loadma sp, r0:r5
+\end{verbatim}
+
+\subsection{Condition Codes}
+
+VASM uses the official Condition Code Mnemonic as used in the official VA documentation. 
+
+\begin{verbatim}
+ldcallizic r0, _branch
+\end{verbatim}
+
+\subsection{Directives}
+
+Directives always start with a dot \verb|.|. 
+
+\section{Directives}
+
+\subsection{.align}
+
+Force the assembler to align the next byte. The syntax is \verb|.align int16 int16|. The first parameter specifies the alignment and the second parameter
+specifies the filling byte. The assembler will emit filling bytes until the current address is divisible by the alignment. 
+
+\begin{verbatim}
+  ldjmp r0, _start  ; Address = 0
+  .byte 0xFF        ; Address = 4
+.label _start       
+  stop              ; Address = 5
+\end{verbatim}
+
+This program would cause an alignment fault on the VA-CPU due to the STOP instruction not being correctly aligned. 
+
+\begin{verbatim}
+  ldjmp r0, _start ; Address = 0
+  .byte 0xFF       ; Address = 4
+.align 4 0x20      ; force alignment
+.label _start
+  stop             ; Address = 8
+\end{verbatim}
+
+Here the \verb|.align| forces the assembler to place the STOP instruction at a correctly aligned address. In the above example it will
+put \verb|0x20| at address 5, 6 and 7 to be able to put the STOP instruction at address 8.
+
+\subsection{.at}
+
+Forces the assembler to skip to a given absolute address (inside the image file). The syntax is \verb|.at int32|. The given integer is treated as unsigned. 
+
+\begin{verbatim}
+.at 16
+.dword @1  ; this dword is placed at address 16 
+           ; (relative to image start address)
+\end{verbatim}
+
+\subsection{.byte}
+
+Emit a raw byte. The syntax is \verb|.byte int16|. The given integer is treated as unsigned and truncated to 8 bits. 
+
+\begin{verbatim}
+.byte 0x46
+.byte 0x00
+.byte 0x05
+.byte 0x00
+\end{verbatim}
+
+\subsection{.dword}
+
+Emit a raw dword. The syntax is \verb|.dword int32|. 
+
+\begin{verbatim}
+.dword @157
+\end{verbatim}
+
+The above example actually describes a \verb|LOADI R0L, 0x05|.
+
+\subsection{.label}
+
+Places a label. The syntax is \verb|.label identifier|. A label assigns a name to a location in code. The label is later resolved by the assembler to its address. Labels
+may also be placed before data. Lables must begin with an underscore.
+
+\begin{verbatim}
+ldjmp r0, _start
+.label _data
+.dword @198771
+.label _start
+  loadadr r0, _data
+  loadid r0, r0, 1
+\end{verbatim}
+
+\subsection{.offset}
+
+The \verb|.offset| directive forces the assembler to use the specified offset when doing label resolution. The default offset is 4096 as the Instruction Pointer
+of the VA-CPU is initialized to 4096. If your code is loaded to a different address then you must change the offset accordingly. 
+
+\begin{verbatim}
+.offset 8192
+stop	; at image address 0
+        ; which is assumed to be address
+        ; 0 + 8192 in memory
+\end{verbatim}
+
+\subsection{.word}
+
+Emit a raw word. The syntax is \verb|.word int16|. 
+
+\begin{verbatim}
+.word 0x12AB
+\end{verbatim}
+
+\section{Pseudo Instructions}
+
+VASM supports Pseudo Instructions to ease programming. 
+
+\subsection{LDCALL}
+
+The LDCALL Pseudo Instruction is a combination of the LOADADR and the CALL instruction. It loads the address of a label into a register and
+performs a call to that address. 
+
+\begin{verbatim}
+ldcall r0, _go
+\end{verbatim}
+
+\subsection{LDJMP}
+
+The LDJMP Pseudo Instruction is a combination of the LOADADR and the JMP instruction. It loads the address of a label into a register and
+performs a jump to that address. 
+
+\begin{verbatim}
+ldjmp r0, _go
+\end{verbatim}
+
+\subsection{LOAD32}
+
+Due to the Instruction Format of VA no instruction accepts more than 16 bit Immediate Data. Therefore, a 32 bit load must be assembled as two 16 bit loads.
+This is done automatically by VASM through the LOAD32 Pseudo Instruction. Depending on the target register this Pseudo Instruction is assembled as either
+two or four instructions. If the target register is not word-accessible VASM will use two additional XCHG instructions. 
+
+\begin{verbatim}
+load32 r8, @77000
+\end{verbatim}
+
+\subsection{LOADADR}
+
+The LOADADR Pseudo Instruction allows loading an address of a label into a register. The syntax is \verb|loadadr reg32, ident|. This is instruction is always
+assembled as two LOADI instructions and therefore the target register must be word-accessible. 
+
+\begin{verbatim}
+loadadr r0, _isPrime
+...
+.label _isPrime
+...
+\end{verbatim}
+
+\subsection{POP}
+
+The POP Pseudo Instruction allows popping a register from the stack where the SP register is implicitly used as the stack pointer. This instruction is assembled
+as a LOADMA instruction. 
+
+\begin{verbatim}
+pop r0
+\end{verbatim}
+
+\subsection{PUSH}
+
+The PUSH Pseudo Instruction allows pushing a register to the stack where the SP register is implicitly used as the stack pointer. This instruction is assembled
+as a STOREMA instruction.
+
+\begin{verbatim}
+push r0
+\end{verbatim}

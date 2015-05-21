@@ -1,0 +1,19 @@
+\section{Interrupt controller}
+\label{sec:interruptcontroller}
+
+The Interrupt Controller detects and manages interrupts from external hardware. The Interrupt Controller consists of the Interrupt Translation Unit and the
+Interrupt Control Unit. 
+
+\subsection{Interrupt Translation Unit}
+\label{sec:itu}
+
+The Interrupt Translation Unit (\Gls{ITU}) translates physical interrupts into virtual interrupts meaning the \Gls{ITU} can remap interrupt numbers to different numbers.
+To do this the \Gls{ITU} uses the Interrupt Translation Table (\Gls{ITT}) located at $400_{16} - 47f_{16}$. The \Gls{ITT} is a table indexed from 0 - 127 (corresponding to physical hardware
+interrupt numbers 0 - 127) where each entry is one byte. If the \Gls{ITU} detects an interrupt at interrupt line $n$ it will look up the virtual interrupt number in the \Gls{ITT}
+at index $n$ and translate the physical interrupt number $n$ to \verb|ITT[n]|. The \Gls{ITT} is initialized with a direct 'one-to-one' mapping. The \Gls{ITU} uses a cached
+version of the \Gls{ITT} to speed up the translation process. The cached version is refreshed every time the Interrupts Enabled Flag in CR1 is set through a MOVTC instruction. 
+
+\subsection{Interrupt Control Unit}
+
+The Interrupt Control Unit (\Gls{ICU}) is informed about external interrupts by the \Gls{ITU}. The \Gls{ICU} informs the CPU about hardware interrupts by transm\Gls{ITT}ing the virtual hardware
+interrupt number. The \Gls{ICU} uses a priority system if multiple interrupts are present at the same time. In such a case, the \Gls{ICU} will always choose the interrupt with the lowest number (virtual). You can configure the priorities of hardware interrupts by remapping physical interrupts through the \Gls{ITT}. (E.g. remapping physical hardware interrupt number 5 to virtual interrupt number 0 will give the physical hardware interrupt number 5 the highest priority.)

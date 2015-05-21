@@ -1,0 +1,13 @@
+\section{DMA}
+
+DMA (Direct Memory Access) is a mechanism to allow hardware to directly access the physical memory without involving the CPU. 
+As long as the CPU can access data solely through the cache DMA has no performance impact. However, the DMA controller and the cache controller
+race for access to the physical memory. If a cache load or cache writeback has to be carried out while a DMA transfer is taking place the
+cache controller has to wait for the completion of that transfer and thus may stall the CPU as the CPU needs data that currently can not be accessed.
+The order in which DMA transfers are carried out is not defined. 
+
+\subsection{DMA transfers}
+
+DMA transfers include read (read from memory) or write (write to memory) transfers. Such transfers can only be requested by hardware. The CPU itself has no control
+over the DMA controller. Before and after a transfer the DMA Controller forces the Cache Controller to do the necessary Cache Writebacks or Cache Loads
+to guarantee memory consistency. 

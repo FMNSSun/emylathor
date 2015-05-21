@@ -1,0 +1,8 @@
+\subsection{Boot process}
+
+On start up the CPU loads $40_{16}$ words from disk at position $00_{16}$ to position $20_{16}$
+in memory. It initially disables interrupts. The stack pointer is set to $\text{1fff}_{16}$ and the
+instruction pointer to $20_{16}$. You should write a boot loader which must be less than $40_{16}$
+words long which loads additional programs from disk. A boot loader must be aware that it is not
+loaded to position $00_{16}$ but to position $20_{16}$ which means that for example jump and call
+addresses have a $20_{16}$ offset due to this. 

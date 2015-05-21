@@ -1,0 +1,23 @@
+\lstset{
+         basicstyle=\ttfamily\fontsize{9}{12}\selectfont, 
+         numbers=left,             
+         numberstyle=\tiny,          
+         numbersep=5pt,              
+         tabsize=2,                 
+         extendedchars=true,         
+         breaklines=true,           
+         keywordstyle=\color{red},
+    		 frame=b,        
+         commentstyle=\color[rgb]{0.4,0.4,0.4}, 
+         stringstyle=\color[rgb]{0.1,0.4,0.4}\ttfamily,
+         xleftmargin=17pt,
+         framexleftmargin=17pt,
+         framexrightmargin=5pt,
+         framexbottommargin=4pt,
+         backgroundcolor=\color[rgb]{0.9,0.9,0.9},     
+ }
+
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox[rgb]{0,0,0}{\parbox{\textwidth}{\hspace{15pt}#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white, singlelinecheck=false, margin=0pt, font={bf,footnotesize}}
+

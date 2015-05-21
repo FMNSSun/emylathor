@@ -1,0 +1,21 @@
+; Tests the SHL instruction
+	LOAD32	R0, @1
+	SHL	R1, R0, 1
+	FAILIC	0x01
+	LOAD32	R2, @2
+	CMP	R1, R2
+	FAILNZ	0x02
+
+	SHL	R1, R0, 3	; 2,4,8
+	FAILIC	0x03
+	LOAD32	R2, @8
+	CMP	R1, R2
+	FAILNZ	0x03
+
+	LOAD32	R0, @-2147483648	; 2s complement = 0x80000000u
+	SHL	R1, R0, 1
+	FAILNC	0x04
+	TEST	R1
+	FAILNZ	0x05
+
+	STOP

@@ -1,0 +1,33 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{courier}
+\usepackage{graphicx}
+\usepackage{amsmath}
+%\usepackage{CJK}
+\usepackage[utf8]{inputenc}
+%\usepackage{rotating}
+\usepackage{fouriernc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage[ngerman]{babel}
+\usepackage{microtype}
+%\usepackage{bussproofs}
+\usepackage{float}
+\usepackage[toc]{glossaries}
+
+
+\setlength{\parindent}{0in}
+
+\newfloat{fexample}{thp}{lop}
+\floatname{fexample}{Beispiel}
+
+\input{./style/pictures.tex}
+\input{./style/pageborder.tex}
+\input{./style/header.tex}
+\input{./style/listings.tex}
+
+\newcommand{\stitle}[1]{ \mbox{}\newline \textbf{#1} }
+\newcommand{\elref}[1]{\ref{#1} on page~\pageref{#1}}

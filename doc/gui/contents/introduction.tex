@@ -1,0 +1,19 @@
+\section{Introduction}
+\subsection{Purpose of this document}
+This document describes how you can use the graphical user interface of \emph{emulathor} to inspect its internal state and how programs can be loaded and run. This manual does not cover how you can compile your program to an executable file. Please read the documentation of the corresponding compiler/assembler.
+
+\subsection{Requirements}
+To work with the graphical user interface (GUI) of the emulator, you should meet this requirements:
+
+\begin{itemize}
+\item A compiled version of the GUI is available 
+\item A compiled sample program is available
+\end{itemize}
+
+\subsection{Start the Graphical User Interface}
+To start the GUI just double-click the file called \emph{gui} in the root folder of the project. If you work with a terminal you can start it with \emph{./gui}.
+
+\subsection{Overview}
+The GUI consists of three different windows. The main window is the entry point of the GUI. Here you can monitor the most important statistics of the emulathor. Further you can load images, run programs and open the additional windows.
+The memory inspection window lets you inspect the physical memory and the contents of the cache. The page directory window lets you inspect the page directory, its page tables and the containing page table entries.
+The following sections provide a more detailed explanation of these windows.

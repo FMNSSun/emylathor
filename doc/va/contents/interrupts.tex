@@ -1,0 +1,86 @@
+\section{Interrupts}
+\label{sec:interrupts}
+
+Interrupts are a mechanism to tell the processor to interrupt the normal program flow and call a specific
+procedure. Interrupts can be fired by hardware and software. Some interrupts are directly fired by the processor (so called
+exceptions).
+
+\subsection{Exceptions}
+\label{sec:exceptions}
+
+Exceptions are fired by the processor when an error occurred Exceptions are interrupts with a high priority, that is, when
+an exception is present the processor will handle the exception immediately before all other interrupts. Exceptions are interrupt
+numbers 0-31. 
+
+\begin{tabular}{ | c | c | l | }
+	\hline                        
+	\textbf{Number} & \textbf{Mnemonic} & \textbf{Description} \\
+	\hline
+	0 & DIVBYZERO & Fired when a division by zero was detected. \\
+	\hline
+	1 & PROTFAULT & Fired when a protection fault occurred I.e. access to protected memory \\
+	  &           & or using a privileged instruction in unprivileged mode. \\
+	\hline
+	2 & DBLEFAULT & Fired when an exception occurred during handling of an exception. \\
+	\hline
+	3 & ADDROVERF & Fired when an address calculation yields an overflow. \\
+	\hline
+	4 & ILLEGOLOP & Fired when an illegal operation was detected. \\
+	\hline
+	5 & PAGEFAULT & Fired when an page fault occurs. \\
+	\hline 
+	6 & EXCNOTHLD & Fired when an exception is not handled. \\
+	  &           & I.e. no ISR was registered in the \Gls{IVT}. \\
+	\hline
+	7 & ITU FAULT & The ITU has detected an error. \\
+	\hline
+	8 & ALIGFAULT & Caused by an unaligned memory access. \\
+	\hline
+\end{tabular}
+
+If the CPU calls an Exception Handler the Exception Flag in CR1 is set. If another exception would occur while the Exception Flag is set the CPU
+will fire a Double Fault Exception instead and set the Failure Flag in CR1. If another exception would occur while the Failure Flag is set the CPU
+will stop execution. 
+
+\subsubsection{Alignment Fault}
+
+When an unaligned memory access is carried out the CPU fires an Alignment Fault Exception. The result of an unaligned memory access is undefined. Therefore,
+an operating system should terminate the failing process. 
+
+\begin{verbatim}
+load32 r0, 0xAFFFFFF1
+loadid r0, r0, 0
+; contents of R0 is now undefined.
+\end{verbatim}
+
+\subsubsection{ITU Fault}
+
+Mainly caused by invalid values in the Interrupt Translation Table (see section~\elref{sec:interruptcontroller}).
+
+\subsection{Hardware interrupts}
+
+Hardware interrupts are fired by external hardware. Hardware interrupts are interrupt numbers 128-255 and map to
+I/O ports 0-127. 
+
+\subsection{Software interrupts}
+
+Software interrupts are fired by software through the INT instruction. 
+
+\subsection{Enabling/Disabling interrupts}
+
+Hardware interrupts may be disabled through the \emph{Interrupts Enabled} flag in the CR1 register.
+Exceptions and software interrupts can not be disabled. Just disabling certain interrupts can be achieved by unregistering the corresponding
+interrupt handler in the \Gls{IVT}. If hardware interrupts are disabled then multiple interrupts by the same source are ignored. 
+
+\subsection{Interrupt Vector Table}
+
+The interrupt vector table (\Gls{IVT}) holds the addresses to the interrupt service routines (ISR). The table holds 256 entries where each entry
+is a 4-byte address. The \Gls{IVT} is located at address $00000000_{16}$ and is 1024 bytes in size. The position of an entry for a given interrupt number may be calculated
+an $n * 4$ (where $n$ is the interrupt number). Addresses are treated as virtual addresses and may not be zero. An address of zero may be used to indicate
+that no ISR shall be called for the corresponding interrupt. 
+
+\subsection{Interrupt handling}
+
+When the CPU detects that an interrupt is present it will load the address of the corresponding ISR. When calling the ISR the CPU saves the CR1 control register inside
+a temporary register, disables interrupts and enables privileged mode in CR1, pushes CR1 (not the actual CR1 but the temporary register) and the IP on the stack (SSP is used as the stack pointer register). 
+When the CPU executes an \emph{IRET} instruction it will restore the \Gls{IP} and CR1 registers by popping them from the stack (in this order, SSP is used as the stack pointer register). You may enable the Interrupts Enabled Flag in the CR1 in your ISR to allow nested hardware interrupts. All changes made to the CR1 register inside the ISR are undone be popping the state of CR1 before calling the ISR. If you wish to make permanent changes to the CR1 register you have to manipulate the CR1 register on the stack before doing \emph{IRET}. 

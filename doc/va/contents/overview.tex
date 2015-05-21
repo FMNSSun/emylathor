@@ -1,0 +1,26 @@
+\section{Overview}
+
+\subsection{VA Processor}
+
+The VA processor is a processor with a Load and Store-, Little-Endian-architecture using a RISC instruction set with a fixed instruction length of 32 bits. It has 16 accessible general purpose registers and a few control registers. The processor has a built-in Memory Management Unit. 
+
+\subsubsection{Modes}
+
+The processor supports an unprivileged mode and a privileged mode to protect access to hardware and memory. 
+
+\subsubsection{Alignment}
+
+Access to unaligned addresses is prohibited and will fire an exception. For byte accesses the data
+needs to be byte aligned, for word accesses the data needs to be word aligned (address must be a multiple of 2) and for dword accesses the data needs to be dword aligned (address must be a multiple of four). 
+
+\subsection{Cache}
+
+To speed up memory access there's a cache between the processor and memory. 
+
+\subsection{DMA}
+
+To support transfers from and to memory without involving the processor VA has a \Gls{DMA} controller.
+
+\subsection{External Hardware}
+
+VA has a keyboard, a timer and a graphics card with a text mode and a RGB mode. 

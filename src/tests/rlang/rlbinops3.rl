@@ -1,0 +1,16 @@
+PROCEDURE main ( NONE )
+LOCALS ( NONE ) IS
+	IF((1024 && 1023) != 0) THEN
+		FAIL;
+	END
+
+	IF((1025 && 1023) != 1) THEN
+		FAIL;
+	END
+
+	IF((1024 || 1) != 1025) THEN
+		FAIL;
+	END
+
+	STOP;
+END

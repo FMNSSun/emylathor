@@ -1,0 +1,74 @@
+\section{MMU}
+
+The MMU (Memory Management Unit) is responsible for managing virtual memory. Virtual memory allows use of virtual address that are translated
+by the MMU to physical addresses. Using the MMU also enables protecting memory region from unprivileged and/or unwanted access. The MMU must be enabled
+through the MMU Enabled Flag in the MR2 register. 
+
+\subsection{Page directory}
+
+The page directory is an array of 1024 addresses which point to page tables. The page directory is $1024 * 4 = 4KB$ in size. An address
+of a page table may not be zero. If the address of an entry in the page directory is zero the MMU assumes that the corresponding page table does
+not exist and will fire a Page Fault Exception. 
+
+\subsection{Page table}
+
+The page table is an array of 1024 page table entries. A page table entry contains 20 frame bits and 12 control bits.
+
+\subsubsection{Page Table Entry}
+
+\begin{tabular}{ | r | r | r | r | r | r | r | r | r | r | }
+	\hline
+	Frame Bits [20] & Reserved [4] & RU & EU & U & WP & WU & EP & PROT & PRESENT \\
+	\hline
+\end{tabular} \\
+
+\stitle{Control bits}
+
+\begin{itemize}
+  \item RU - If the \emph{Read Unprivileged Only} Flag is set the page can only be read in unprivileged mode. 
+  \item EU - If the \emph{Executable From Unprivileged} Flag is set the CPU is allowed to execute code contained in the page only if it is in privileged mode.
+  \item U - The \emph{Used} Flag is set by the MMU when a page has been accessed.
+  \item WP - If the \emph{Write From Privileged} Flag is set the page can be written to from privileged mode (otherwise only read access is allowed).
+  \item WU - If the \emph{Write From Unprivileged} Flag is set the page can be written from unprivileged mode (otherwise only read access is allowed.
+  \item EP - If the \emph{Executable From Privileged} Flag is set the CPU is allowed to execute code contained in the page only if it is in privileged mode.
+  \item PROT - If the \emph{Protected} Flag is set the page can only be accessed (read or write) from privileged mode.
+  \item PRESENT - If the \emph{Present} Flag is set the MMU assumes that the page is in memory. 
+\end{itemize}
+
+\subsection{Paging}
+
+If the MMU is enabled all addresses are treated as virtual addresses. Before any access to memory these virtual addresses are translated by the MMU
+to physical addresses (the MMU requires physical addresses). A physical page has a fixed size of 4KB. 
+
+\stitle{Virtual address format}
+
+\begin{tabular}{ | r | r | r | }
+	\hline
+	PDINDEX [10] & PTINDEX [10] & OFFSET [12] \\
+	\hline
+\end{tabular} \\
+
+After the MMU has translated the virtual address it will check the control bits from the page table entry. 
+
+\subsubsection{Page fault}
+
+If the MMU detects an error it will fire a Page Fault Exception (more information about exceptions see~\elref{sec:interrupts}). The exact cause
+of the Page Fault Exception is specified by an error code in the MR4 register and the MR3 register contains the virtual address that caused the Page Fault Exception. 
+
+\stitle{Page Fault Error Codes}
+
+\begin{itemize}
+  \item $00_{16}$ - Success: No error.
+  \item $01_{16}$ - Page Not Present: The present flag of the corresponding page was not set.
+  \item $02_{16}$ - Access Violation: The MMU detected an access violation. (E.g. accessing a protected page from unprivileged mode)
+  \item $03_{16}$ - Not Executable: The CPU tried to execute code in a non-executable area.
+  \item $04_{16}$ - Entry Missing: No pointer to a page table was set in the page directory.
+\end{itemize}
+
+
+\subsubsection{Address translation}
+
+To translate a virtual address the MMU loads the physical address of the page directory from the MR1 register. The MMU will
+load the $PDINDEX$-th entry from the page directory to retrieve the physical address of the corresponding page table. Then the MMU will
+load the $PTINDEX$-th entry from the page table. It will then replace the first 20 bits (from left to right) of the virtual address with the
+Frame Bits from the page table entry.  

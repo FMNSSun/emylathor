@@ -1,0 +1,8 @@
+; Tests the NOT instruction
+	LOAD32 R0, @55112233
+	NOT	R1, R0
+	LOAD32 R2, @-55112234
+	CMP	R1, R2
+	FAILNZ	0x01
+
+	STOP

@@ -1,0 +1,8 @@
+\subsection{vkbc}
+
+vkbc is a simple keyboard controller. The keyboard controller is located behind port 1. If a key is pressed or released the
+keyboard controller will fire an interrupt (HW-Int. No. 1). Once an interrupt is fired the keyboard controller will suspend its operation
+until data is read from its port. If the CPU and/or operating system can't handle keyboard controller interrupts fast enough key presses
+or key releases are lost. If you read from the keyboard controller port the lowest word contains the scancode and the highest bit is set
+if the key was pressed. If the highest bit is not set then the key was released. Since \emph{emulathor} uses SDL to emulate the keyboard
+it also uses SDL-Scancodes (see \verb|http://wiki.libsdl.org/SDL_Scancode|).

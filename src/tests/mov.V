@@ -1,0 +1,37 @@
+; Tests the MOV instruction
+	
+	; 32 bit register
+	XOR	R0, R0, R0
+	LOADI	R0LL, 12
+	LOAD32	R1, @12
+	CMP	R0, R1
+	FAILNZ	0x01
+	MOV	R3, R1
+	CMP	R3, R1
+	FAILNZ	0x02
+	
+	; 16 bit register
+	XOR	R1,	R1,	R1
+	LOADI	R1L,	0x2442
+	LOADI	R1H,	0x4224
+	LOAD32	R0,	@0x24424224 ; expected value
+	MOV	R3H,	R1L
+	MOV	R3L,	R1H
+	CMP	R0,	R3
+	FAILNZ	0x03
+	
+	; 8 bit register
+	XOR	R1,	R1,	R1
+	LOADI	R1LL,	0x42
+	LOADI	R1LH,	0x24
+	LOADI	R1HL,	0x21
+	LOADI	R1HH,	0x12
+	LOAD32	R0,	@0x42211224 ; expected value
+	MOV	R3HL,	R1HL
+	MOV	R3HH,	R1LL
+	MOV	R3LH,	R1HH
+	MOV	R3LL,	R1LH
+	CMP	R0,	R3
+	FAILNZ	0x04
+	
+	STOP

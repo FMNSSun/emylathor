@@ -1,0 +1,24 @@
+\section{Cache}
+
+The cache sits between the CPU and the memory. The cache is divided into cache lines of fixed length. The cache controller controls the cache. 
+
+\subsection{Cache reads and writes}
+
+The CPU does not directly access the computers memory but merely accesses the cache. When the CPU issues a cache access the cache controller will search through the cache to check if the requested data is inside the cache. If data is not present a cache load or cache line replacement is issued. The cache controller does this by checking each line's associated start address. The start address is the actual address in memory. Since each line has a fixed length a line contains all the data between the start address and the start address + cache line size. If an accessed address falls out of this range it is not in that line. If an accessed address is not contained in any line a cache miss occurs. If a cache miss occurs the cache controller will replace a line and load the required data from memory into the line to replace. 
+
+\subsection{Cache line replacement}
+
+When data is not in the cache the cache controller has to decide which line it should sacrifice to load the new data from memory into the cache. The cache controller employs a hit counter to determine which line to replace. For every successful access to a cache line (i.e no cache miss occurred) the line's (the line containing the data) hit count is increased. When confronted with a cache line replacement the cache controller will replace the cache line with the lowest hit count and simultaneously decreases the hit count of every other line. To replace a cache line the cache controller performs a cache writeback (if necessary) followed by a cache load. After a cache line replacement the requested data is now in the cache and the cache access from the CPU can now be carried out. During a cache line replacement the CPU is put on hold and has to wait. 
+
+\subsection{Cache line writeback}
+
+The process of writing data from the cache back to memory is called a cache line writeback. A writeback will write the data in a cache line back to it's original location in memory (the cache line's start address). A writeback is only necessary for lines that have been modified. A cache line that has only been read but not written to does not require a cache writeback.
+
+
+\subsection{Cache line load}
+
+The process of reading data from memory into a cache line is called a cache line load. The cache controller will remember the location of the data in memory by setting the cache line's internal start address. 
+
+\subsection{Alignment}
+
+The cache controller divides memory into chunks of fixed length. The length of each chunk must be equal to the cache line size. When the CPU accesses an unaligned address which is not present in the cache the cache controller will load the chunk that contains the unaligned address. The start address of a cache line is therefore always a multiple of the cache line size. This may have an impact on application performance. When an array of 20 bytes is placed at an unaligned address (e.g 62, cache line size = 64) the cache controller will load the memory chunk at address 0-63 which means that only 2 bytes of the array is in the cache and an access to the third byte will require an additional cache line load. If the array were aligned (e.g at address 64) then only one cache line load would be necessary to access each byte of the array. 

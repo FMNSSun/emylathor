@@ -1,0 +1,548 @@
+\section{About}
+
+This document describes the Rhailargue Language and contains the Language Specification. All Rhailargue compilers must fully comply
+with this language specification. 
+
+\subsection{Why Rhailargue?}
+
+Rhailargue serves as a simple systems programming language and is seated above assembler and below languages like C. 
+Rhailargue was developed for the VA platform as a means to develop test programs more quickly. 
+
+\section{Syntax}
+
+\subsection{Tokens}
+
+\begin{verbatim}
+KEYWORD_IDENT : [a-z_]+[a-zA-Z0-9]*
+KEYWORD_PARAMETERS : [\t\r\n ]*PARAMETERS[\t\r\n ]*
+KEYWORD_LOCALS : [\t\r\n ]*LOCALS[\t\r\n ]*
+KEYWORD_IS : [\t\r\n ]*IS[\t\r\n ]*
+KEYWORD_END : [\t\r\n ]*END[\t\r\n ]*
+KEYWORD_RETURN : [\t\r\n ]*RETURN[\t\r\n ]*
+KEYWORD_IF : [\t\r\n ]*IF[\t\r\n ]*
+KEYWORD_IFE : [\t\r\n ]*IFE[\t\r\n ]*
+KEYWORD_ELSE : [\t\r\n ]*ELSE[\t\r\n ]*
+KEYWORD_THEN : [\t\r\n ]*THEN[\t\r\n ]*
+KEYWORD_WWHILE : [\t\r\n ]*WHILE[\t\r\n ]*
+KEYWORD_LOOP : [\t\r\n ]*LOOP[\t\r\n ]*
+KEYWORD_REG : [\t\r\n ]*REG[\t\r\n ]*
+KEYWORD_BYTE : [\t\r\n ]*BYTE[\t\r\n ]*
+KEYWORD_NONE : [\t\r\n ]*NONE[\t\r\n ]*
+KEYWORD_FAIL : [\t\r\n ]*FAIL[\t\r\n ]*
+KEYWORD_STOP : [\t\r\n ]*STOP[\t\r\n ]*
+KEYWORD_STATIC : [\t\r\n ]*STATIC[\t\r\n ]*
+KEYWORD_LABEL : [\t\r\n ]*LABEL[\t\r\n ]*
+KEYWORD_GOTO : [\t\r\n ]*GOTO[\t\r\n ]*
+KEYWORD_STRING : [\t\r\n ]*STRING[\t\r\n ]*
+KEYWORD_SIZEOF : [\t\r\n ]*STRING[\t\r\n ]*
+KEYWORD_WIDTHOF : [\t\r\n ]*STRING[\t\r\n ]*
+KEYWORD_BYTES : [\t\r\n ]*BYTES[\t\r\n ]*
+KEYWORD_REGS : [\t\r\n ]*REGS[\t\r\n ]*
+KEYWORD_RESTORE : [\t\r\n ]*RESTORE[\t\r\n ]*
+KEYWORD_SAVE : [\t\r\n ]*SAVE[\t\r\n ]*
+KEYWORD_HIDE : [\t\r\n ]*HIDE[\t\r\n ]*
+KEYWORD_UNHIDE : [\t\r\n ]*UNHIDE[\t\r\n ]*
+KEYWORD_EXTERN : [\t\r\n ]*EXTERN[\t\r\n ]*
+KEYWORD_CHECKED : [\t\r\n ]*CHECKED[\t\r\n ]*
+KEYWORD_OVERFLOW : [\t\r\n ]*OVERFLOW[\t\r\n ]*
+PAREN_LEFT : [\t\r\n ]*\([\t\r\n ]*
+PAREN_RIGHT : [\t\r\n ]*\)[\t\r\n ]*
+BRACKET_LEFT : [\t\r\n ]*\[[\t\r\n ]*
+BRACKET_RIGHT : [\t\r\n ]*\][\t\r\n ]*
+AT : [\t\r\n ]*@[\t\r\n ]*
+COLON : [\t\r\n ]*:[\t\r\n ]*
+BACKTICK : [\t\r\n ]*`[\t\r\n ]*
+SEMICOLON : [\t\r\n ]*;[\t\r\n ]*
+STROKE : [\t\r\n ]*\|[\t\r\n ]*
+DOT: [\t\r\n ]*#[\t\r\n ]*
+OP_ASSIGN : OP_ASSIGN
+BIN_OP : (\+|\-|\*|\/|==|!=|<<|>>|\\\\|\|\||&&|AND|OR|>|<|<=|>=|S\+|S\-|S\*|S\/|S==|
+	  S!=|S<|S>|S>=|S<=
+	 )
+UNY_OP : (\+=|\-=|\*=|\/=)
+UNY_OP2 : (NOT|~~)
+INT : [\t\r\n ]*[\-]*[0-9]+[\t\r\n ]*
+ASM : [\t\r\n ]*ASM~[\t\r\n ](.*)\n
+STRING : [\t\r\n ]*'(.*)'[\t\r\n ]* 
+
+Comment: [\t\r\n ]*\?\?(.*)[\n]+[\t\r\n ]*
+\end{verbatim}
+
+\subsection{Grammar}
+
+\begin{verbatim}
+declarations ::= 
+   decl | procedure | declarations procedure | declarations decl
+
+procedure ::= 
+   KEYWORD_PROCEDURE IDENT PAREN_LEFT parameters PAREN_RIGHT KEYWORD_LOCALS 
+   PAREN_LEFT locals PAREN_RIGHT KEYWORD_IS statements KEYWORD_END
+ | KEYWORD_IPROCEDURE IDENT KEYWORD_IS statements KEYWORD_END
+
+decl ::= 
+   KEYWORD_STATIC IDENT OP_ASSIGN INT SEMICOLON 
+ | KEYWORD_STATIC KEYWORD_BYTE IDENT OP_ASSIGN INT SEMICOLON 
+ | KEYWORD_STATIC KEYWORD_STRING IDENT OP_ASSIGN strings SEMICOLON 
+ | KEYWORD_STATIC KEYWORD_BYTES IDENT INT SEMICOLON
+ | KEYWORD_STATIC KEYWORD_REGS IDENT INT SEMICOLON 
+ | KEYWORD_STATIC KEYWORD_BYTES COLON IDENT COLON bytes SEMICOLON 
+ | KEYWORD_STATIC KEYWORD_REGS COLON IDENT COLON regs SEMICOLON
+ | KEYWORD_HIDE IDENT SEMICOLON
+ | KEYWORD_UNHIDE IDENT SEMICOLON
+ | KEYWORD_EXTERN IDENT SEMICOLON
+ | KEYWORD_EXTERN KEYWORD_PROCEDURE IDENT INT SEMICOLON
+ | KEYWORD_EXTERN KEYWORD_IPROCEDURE IDENT INT SEMICOLON
+
+strings ::= 
+   string | strings string
+
+string ::= 
+   INT | STRING
+
+bytes ::= 
+   byte | bytes byte
+
+regs ::= 
+   reg | regs reg
+
+reg ::= INT
+
+byte ::= INT
+
+statements ::= 
+   statement | statements statement
+
+statement ::= 
+   call SEMICOLON 
+ | KEYWORD_FAIL SEMICOLON
+ | KEYWORD_STOP SEMICOLON
+ | KEYWORD_RETURN expression SEMICOLON
+ | KEYWORD_WHILE expression KEYWORD_LOOP statements KEYWORD_END
+ | KEYWORD_IF expression KEYWORD_THEN statements KEYWORD_END
+ | AT KEYWORD_REG COLON expression OP_ASSIGN expression SEMICOLON
+ | IDENT OP_ASSIGN expression SEMICOLON
+ | IDENT OP_UNI expression SEMICOLON
+ | AT KEYWORD_REG COLON expression STROKE expression OP_ASSIGN 
+    expression SEMICOLON
+ | KEYWORD_IFE expression KEYWORD_THEN statements KEYWORD_ELSE
+    statements KEYWORD_END
+ | KEYWORD_LABEL IDENT SEMICOLON
+ | KEYWORD_GOTO IDENT SEMICOLON
+ | KEYWORD_GOTO COLON expression SEMICOLON
+ | ASM
+
+expression ::= 
+   exp | expression exp
+
+exp ::= 
+   call | IDENT | INT
+ | KEYWORD_CHECKED expression
+ | KEYWORD_OVERFLOW
+ | PAREN_LEFT expression BIN_OP expression PAREN_RIGHT
+ | PAREN_LEFT AT KEYWORD_REG COLON expression PAREN_RIGHT
+ | PAREN_LEFT AT KEYWORD_BYTE COLON expression PAREN_RIGHT
+ | BACKTICK IDENT
+ | PAREN_LEFT AT KEYWORD_REG COLON expression STROKE expression PAREN_RIGHT
+ | DOT IDENT
+ | PAREN_LEFT OP_UNY2 expression PAREN_RIGHT
+
+call ::= 
+   IDENT BRACKET_LEFT cexpressions BRACKET_RIGHT
+
+cexpressions ::=
+   cexpressions exp SEMICOLON | exp SEMICOLON | KEYWORD_NONE
+
+locals ::=
+   local | locals local
+
+local ::= 
+   IDENT SEMICOLON | KEYWORD_NONE
+
+parameters ::= 
+   parameter | parameters parameter
+
+parameter ::=
+   IDENT SEMICOLON | KEYWORD_NONE
+\end{verbatim}
+
+\section{Data types}
+
+Rhailargue supports two data types: \verb|REG| and \verb|BYTE|. The default data type is always \verb|REG|. 
+
+\subsection{BYTE}
+
+The \verb|BYTE| data type refers to the smallest generally accessible value on a certain architecture. An unsigned \verb|BYTE| must have a range of
+$0 .. 2^{\text{WIDTHOF BYTE}}$.
+
+\subsubsection{Constraints}
+
+\verb|WIDTHOF BYTE| and \verb|SIZEOF BYTE| both must be positive and non-zero. It is not guaranteed that \verb|SIZEOF BYTE| is $1$. An unsigned \verb|REG| must have a range of $0 .. 2^{\text{WIDTHOF REG}}$.
+
+\subsection{REG}
+
+The \verb|REG| data type usually refers to a value storable in a single general purpose register on a certain architecture. 
+
+\subsubsection{Constraints}
+
+\verb|WIDTHOF REG| must be a positive, non-zero integer multiple of \verb|WIDTHOF BYTE|. \verb|SIZEOF REG| must be a positive, non-zero integer multiple of \verb|SIZEOF BYTE|. \verb|SIZEOF REG| must be equal or greater than \verb|SIZEOF BYTE|. A \verb|REG|-value must be large enough to hold a pointer but not larger. 
+
+\subsection{boolean}
+
+This is just a pseudo-type. Every non-zero unsigned value is treated as true. Every other value is treated as false. 
+
+\section{Operators}
+
+All operators perform on \verb|REG| values. Treating the result of a unsigned operation or bitwise operation as signed is hardware dependant behaviour. If a comparison
+evaluates to true the result is unsigned $1$ else unsigned $0$. \textit{lvalue} refers to the left operand and \textit{rvalue} to the right operand. 
+
+\subsection{Unary}
+
+\subsubsection{SIZEOF}
+
+\verb|SIZEOF| must return the physical size of the specified data type. The physical size must include alignment restrictions (i.e. \verb|SIZEOF| must be padding aware).
+The physical size must be returned in 'addresses'. 
+
+\subsubsection{WIDTHOF}
+
+\verb|WIDTHOF| must return the logical size of the specified data type in bits. 
+
+\subsubsection{NOT}
+
+\verb|NOT| performs a negation of a boolean value. For any non-zero (unsigned) input value the result must be unsigned $0$. If the input is unsigned $0$ the result
+must be unsigned $1$. 
+
+\subsubsection{\textasciitilde\textasciitilde}
+
+\verb|~~| performs a bitwise negation and treats the input value as a series of bits. Treating the result as signed is hardware dependant behaviour. 
+
+\subsection{Binary}
+
+\subsubsection{+}
+
+\verb|+| performs unsigned addition. The result of an overflow is hardware dependant. 
+
+\subsubsection{-}
+
+\verb|-| performs unsigned subtraction. The result of an underflow is hardware dependant. 
+
+\subsubsection{/}
+
+\verb|/| performs unsigned division. The result of a division by zero is hardware dependant.
+
+\subsubsection{*}
+
+\verb|*| performs unsigned multiplication. The result of an overflow is hardware dependant. 
+
+\subsubsection{<<}
+
+\verb|<<| performs a bitwise shift to the right. Inserts zeroes. The rvalue specifies the number of shifts to perform modulo \verb|SIZEOF REG|. 
+
+\subsubsection{>>}
+
+\verb|>>| performs a bitwise shift to the lift. Inserts zeroes. The rvalue specifies the number of shifts to perform modulo \verb|SIZEOF REG|. 
+
+\subsubsection{\textbackslash\textbackslash}
+
+\verb|\\| performs a bitwise xor.
+
+\subsubsection{||}
+
+\verb+||+ performs a bitwise or.
+
+\subsubsection{\&\&}
+
+\verb|&&| performs a bitwise and. 
+
+\subsubsection{==}
+
+\verb|==| performs unsigned comparison for equality.
+
+\subsubsection{!=}
+
+\verb|!=| performs unsigned comparison for inequality
+
+\subsubsection{< > <= >=}
+
+\verb|<| evaluates to true if the lvalue is less than the rvalue. \verb|>| evaluates to true if the lvalue is greater than the rvalue. 
+\verb|<=| evaluates to true if the lvalue is less than or equal to the rvalue. \verb|>=| evaluates to true if the lvalue is greater than or equal to the rvalue. 
+All values treated as unsigned. 
+
+\subsubsection{S+ S* S- S/}
+
+Signed versions of \verb|+ * - /|. Mixing signed and unsigned operations is hardware dependant behaviour. The behaviour of signed overflows/underflows is hardware dependant. 
+These operators are not mandatory.
+
+\subsubsection{S== S!= S< S> S<= S>=}
+
+Signed versions of \verb|== != < > <= >=|.  These operators are not mandatory. 
+
+\subsubsection{AND}
+
+\verb|AND| performs an AND on boolean input values. If the rvalue is non-zero and the lvalue is non-zero the result will be true otherwise false. 
+
+\subsubsection{OR}
+
+\verb|OR| performs an OR on boolean input values. If either of the input values is non-zero the result will be true otherwise false. 
+
+\subsection{Assignment}
+
+\subsubsection{:=}
+
+\verb|:=| is the standard assignment operator. It assigns a value to a local variable or to a dereferenced pointer. Assigning a value to a static variable
+is only allowed through a pointer dereference to the static variable.
+
+\begin{verbatim}
+STATIC var := 123;
+...
+@REG:.var := 124;
+\end{verbatim}
+
+\subsubsection{+= -= *= /= \&= |= \textbackslash=}
+
+\verb|a += b| is defined as \verb|a := (a + b)|.  \verb|a -= b| is defined as \verb|a := (a - b)|.  \verb|a *= b| is defined as \verb|a := (a * b)|. 
+\verb|a /= b| is defined as \verb|a := (a / b)|.  \verb|a &= b| is defined as \verb|a := (a && b)|. \verb?a |= b? is defined as \verb?a := (a || b)?.
+\verb|a \= b| is defined as \verb|a := (a \\ b)|. All these operations are only permitted on local variables. 
+
+\section{Pointer}
+
+A pointer is a value that represents a memory address. 
+
+\subsection{Retrieving pointers}
+
+The \verb|.| (dot operator) returns the address of a static variable whereas \verb|`| (backtick operator) returns the address of a local variable. Using the dot operator
+on local variables is illegal and so is using the backtick operator on static variables. If a static and a local variable have the same name the dot operator returns
+the address of the static variable with that name and the backtick operator the address of the local variable with that name. 
+
+\subsection{Dereferencing pointers}
+
+The \verb|@| (at operator) is capable of dereferencing a pointer. Dereferencing returns the value at a given location. When dereferencing a type has to be specified.
+\verb|@REG:0| returns a \verb|REG| value from memory address $0$ whereas \verb|@BYTE:0| returns a \verb|BYTE| value (as a \verb|REG| value) from memory address $0$.
+\verb|@REG:ptr| dereferences a pointer to a \verb|REG| a value. The at operator also allows for array indexes. \verb?@REG:a|b? is equal to \verb?@REG:(a + (b * SIZEOF REG))? (the same applies to \verb|BYTE| as well). Dereferencing a memory address that has not been returned by either the dot operator or backtick operator is hardware dependant behaviour. Dereferencing a pointer to a local variable is undefined behaviour once the local variable has left its scope. 
+
+\subsection{Pointer arithmetic}
+
+Since pointers are actually just \verb|REG| values all operations work on them as if they were not pointers. When doing pointer arithmetic to access
+elements in a sequence \verb|ptr += SIZEOF BYTE| or \verb|ptr += SIZEOF REG| must be used (everything else is hardware dependant behaviour). 
+
+\section{Procedures}
+
+\subsection{Writing procedures}
+
+Please refer to the Syntax section for more information about how to write procedures.
+If a procedure has no \verb|RETURN|-statement it is undefined behaviour (compilers might insert dummy \verb|RETURN 0;| statements). 
+The exact number of allowed parameters and/or local variables is hardware dependant. Compilers must produce error messages if a procedure uses too much stack.
+(For example: On some machines only 16 bytes of stack are available. If a compiler chooses to pass parameters through the stack and \verb|SIZEOF REG == 4| then
+a procedure can't possibly accept more than 4 parameters.). A compiler must at least allow for 4 parameters and 4 locals. If this is not possible due to stack restriction
+the compiler must use registers or even memory to allow for at least 4 parameters and 4 locals. If this is not possible then the compiler CAN NOT be fully standard
+compliant. Using more than 4 parameters and 4 locals is hardware dependant behaviour. 
+
+\subsubsection{NONE}
+
+If a procedure has no parameters then the \verb|NONE|-keyword must be used (the same applies to locals as well).
+
+\begin{verbatim}
+PROCEDURE main ( NONE )
+LOCALS ( NONE ) IS
+END
+\end{verbatim}
+
+\subsubsection{The main procedure}
+
+The entry point of a program is always the procedure named \emph{main}. 
+
+\subsection{Calling procedures}
+
+Please refer to the Syntax section for more information about the exact syntax of procedure calls. A compiler must guarantee that parameters are evaluated left to right.
+
+\begin{verbatim}
+someProcedure [ foo1 [ 1; ]; foo2 [ 1; ]; ];
+\end{verbatim}
+
+In the above example \emph{foo1} is ALWAYS called before \emph{foo2}. 
+
+\subsection{Calling conventions}
+
+The standard does not define any calling conventions (other than the order of parameter evaluation must be left to right). 
+
+\subsection{IPROCEDURE}
+
+An \verb|IPROCEDURE| is a special procedure for which the compiler must not generate any entry or exit code. \verb|IPROCEDURES| are usually used
+for Interrupt Services Routines and magic trickery. Calling or jumping to a IPROCEDURE is undefined behaviour. 
+
+\section{Control structures}
+
+\subsection{IF}
+
+If the condition evaluates to true then the contained block is executed. Otherwise the \verb|IF|-statement is skipped.
+
+\begin{verbatim}
+IF (a == b) THEN
+  NONE;
+END
+\end{verbatim} 
+
+\subsection{IFE}
+
+If the condition evaluates to true then the block between \verb|THEN| and \verb|ELSE| is executed. Otherwise the block between \verb|ELSE| and \verb|END|
+is executed. 
+
+\begin{verbatim}
+IFE (a == b) THEN
+  NONE;
+ELSE
+  NONE;
+END
+\end{verbatim}
+
+\subsection{WHILE}
+
+The contained block is executed as long as the condition evaluates to true. After each 'loop' the condition is evaluated again. If the condition does not evaluate
+to true the \verb|WHILE|-statement is skipped. 
+
+\begin{verbatim}
+WHILE (a > 10) LOOP
+  a := 1;
+END
+\end{verbatim}
+
+\section{LABEL and GOTO}
+
+\verb|LABEL| assigns a name to a location in code. This label is in global scope and may later be used by a \verb|GOTO|-statement. \verb|GOTO| jumps to the location
+where the label was declared. Since labels are in file scope it is possible to jump into other functions. Doing so is compiler and/or hardware dependant behaviour
+and should not really be used at all. \verb|GOTO| also allows for computed jumps (e.g. \verb|GOTO : 1024|). Computed jumps are hardware dependant behaviour. Main
+usage of labels is breaking out of loops.
+
+Labels are useful to break out of loops:
+
+\begin{verbatim}
+PROCEDURE main ( NONE )
+LOCALS ( NONE ) IS
+  WHILE (1 == 1) LOOP
+    GOTO abort;
+  END
+LABEL abort;
+  STOP;
+END
+\end{verbatim}
+
+\section{STATIC variables}
+
+\verb|STATIC|-variables have a global scope and can only be accessed through pointers. \verb|STATIC|-variables are per default \verb|REG|-values unless 
+\verb|STATIC BYTE| is used. 
+
+\subsection{Arrays}
+
+An array is a sequence of elements where linear access must be guaranteed. The n-th element of an array (named foo) must be located at \verb|.foo + (n * SIZEOF <TYPE>)|. 
+(The first element is the 0-th element (array index starts at $0$)).
+
+\subsection{Uninitialized arrays}
+
+An array may be declared solely by declaring its size. If done so, the values in the array are undefined. 
+
+\begin{verbatim}
+STATIC REGS table 5;
+\end{verbatim}
+
+\subsection{Initialized arrays}
+
+An array may also be declared by a list of values. 
+
+\begin{verbatim}
+STATIC REGS : table : 1 2 3 4 5;
+\end{verbatim}
+
+\section{FAIL and STOP}
+
+A \verb|FAIL|-statement aborts the program and reports failure. \verb|FAIL| and/or \verb|STOP| may use the operating system's \verb|exit|-syscall or if no operating system is available may terminate the computer. \verb|STOP| aborts the program and does not report failure. If abortion is not possible these statements shall be implemented as
+endless loops. 
+
+\section{SAVE and RESTORE}
+
+The \verb|SAVE|-statement saves the 'execution state' and the \verb|RESTORE|-statement restores the 'execution state'. These are usually used inside
+\verb|IPROCEDURE|s and should save all (restore all) registers (etc) so that if a procedure is interrupted by an iprocedure it has no effect on
+the procedure after control goes back to it. \verb|SAVE| and \verb|RESTORE| must allow nesting (i.e if an iprocedure is interrupted
+by another iprocedure). The exact implementation of \verb|SAVE| and \verb|RESTORE| is compiler and/or hardware dependant. 
+
+\section{Scopes}
+
+There exists three scopes: Global scope, local scope and file scope. Identifiers in file scope are visible inside the same file they were declared.
+Identifiers in local scope are only visible in the same procedure and global scope is visible globally. static variables and iprocedures are per default in file scope. Procedures are per default in global scope.
+
+\subsection{HIDE and UNHIDE}
+
+\verb|UNHIDE| on static variables or iprocedures moves them to global scope. \verb|HIDE| moves procedures to file scope. Labels are always in file scope (and can't
+be moved to other scopes). 
+
+\subsection{EXTERN}
+
+\verb|EXTERN| tells the compiler that a variable or procedure is in another compilation unit. When declaring an extern procedure or iprocedure the number of parameters
+must be specified. 
+
+\section{CHECKED and OVERFLOW}
+
+\verb|CHECKED| tells the compiler to remember overflow (signed or unsigned) of a certain operation. If an overflow (or underflow) has occurred \verb|OVERFLOW| returns true (else false). The compiler must remember the overflow until another \verb|CHECKED| expression occurs (i.e another \verb|CHECKED| expression overwrites the previous state). 
+Using \verb|CHECKED| and/or \verb|OVERFLOW| is hardware dependant behaviour (on some architectures signed overflow generates exceptions). 
+
+\section{REQUIRE}
+
+\verb|REQUIRE| shall be used when a program relies on a specific behaviour or property of the underlying hardware.
+
+\subsection{Properties}
+
+\begin{itemize}
+	\item \verb|sizeof byte OP N| - Constraint on \verb|SIZEOF BYTE|. 
+	\item \verb|sizeof reg OP N| - Constraint on \verb|SIZEOF REG|. 
+	\item \verb|widthof reg OP N| - Constraint on \verb|WIDTHOF REG|.
+	\item \verb|widthof byte OP N| - Constraint on \verb|WIDTHOF BYTE|.
+	\item \verb|big endian| - Requires on big endian.
+	\item \verb|little endian| - Requires on little endian.
+	\item \verb|saturated A_OP| - Requires \emph{A\_OP} doing saturated arithmetic. If \emph{A\_OP} produces an overflow the result must be set
+					to the maximum possible value. If \emph{A\_OP} produces an underflow the result must be set to the
+					minimum possible value.
+	\item \verb|checked A_OP| - Requires that \emph{A\_OP} supports \verb|CHECKED|. I.e. the program must not be terminated when an overflow or underflow
+					occurs and \verb|OVERFLOW| must return true.
+	\item \verb|target TARGET| - Requires a specific target.
+	\item \verb|two's complement| - Requires two's complement.
+	\item \verb|one's complement| - Requires one's complement.
+	\item \verb|signed operators| - Requires signed operators (i.e. the $S$-operators). 
+\end{itemize}
+
+\subsubsection{OP}
+
+Any of \verb|>= == <=|. (E.g. \verb|sizeof byte == 1| requires that the physical size of a byte including padding is 1 (which means that no padding is allowed)).
+
+\subsubsection{N}
+
+An integer.
+
+\subsubsection{A\_OP}
+
+Any of \verb|+ - * / S+ S- S* S/|.  
+
+\section{Rhailargue Standard Library}
+
+The Rhailargue Standard Library is a set of hardware independent utility functions.
+
+\subsection{string.rl}
+
+\subsubsection{strlen}
+
+\verb|PROCEDURE strlen ( ptr; )|\\
+The strlen procedure computes the length of a string. strlen accepts a pointer to such a string and returns the length of the string (without the
+trailing 0-byte).
+
+\subsubsection{strcpy}
+
+\verb|PROCEDURE strcpy ( src; dst; )|\\
+The strcpy procedure copies a string to another location in memory. strcpy
+accepts a source pointer (to the source string) and a destination pointer and
+then copies the source string into the destination buffer. The destination pointer
+must point to a large enough buffer to hold the source string (including the trailing 0-byte).
+
+\subsubsection{strcmp}
+
+\verb|PROCEDURE strcmp ( src; dst;)|\\
+The strcmp procedure compares two strings. strcmp accepts a source pointer
+(to the source string) and a destination pointer (to the destination string)
+and compares the source string with the destination string. If both are equal
+then strcmp returns unsigned 1 else strcmp returns unsigned 0.

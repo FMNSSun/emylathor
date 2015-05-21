@@ -1,0 +1,15 @@
+\section{Memory}
+
+\subsection{Memory map}
+
+\begin{tabular}{ | r | l | }
+	\hline
+	\textbf{Address range} & \textbf{Description} \\
+	\hline
+	$00000000_{16}$ - $000003ff_{16}$ & Reserved for the IVT (see section~\elref{sec:interrupts}). \\
+	\hline
+	$00000400_{16}$ - $0000047f_{16}$ & Reserved for the ITT (see section~\elref{sec:itu}). \\
+	\hline
+	$00000480_{16}$ - $00000fff_{16}$ & Reserved. \\
+	\hline
+\end{tabular}
