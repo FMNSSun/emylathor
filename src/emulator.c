@@ -34,6 +34,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <gio/gio.h>
 
 _va_emu void emu_load_img(char* path, emulator_context* ectx) {
+	g_type_init();
+
 	GFile* infile = g_file_new_for_path(path);
 
 	char* filedata = NULL;
