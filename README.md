@@ -1,3 +1,6 @@
+THIS IS A COPY OF bitbucket.org/mroman_/emulathor (which was a school project years ago). 
+However, some things have been removed (and most likely more stuff will be removed as well). 
+
 # About
 
 The goal of this project is to develop an emulator for a simple computer including simple hardware. The emulator is intended
