@@ -1,1 +1,0 @@
-Please press the Key "K" or "T" (on dvorak). The program should then terminate. If not -> Bug.

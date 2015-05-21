@@ -1,2 +1,0 @@
-Visual inspection. You should see every character (periodically). Does not terminate automatically. Click on Close on the sdl window. 
-If the text is displayed weird it's probably a bug. 
