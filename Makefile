@@ -5,10 +5,10 @@ LFLAGS_GLIB = `pkg-config --libs glib-2.0` `pkg-config --libs gio-2.0`
 
 CFLAGS = -std=gnu99 -pedantic -Wall -Werror -Isrc/ $(CFLAGS_GLIB) -O3 -DDUMP_INT -DDUMP_ALL
 
-LFLAGS = -lSDL -lSDL_image $(LFLAGS_GLIB) 
+LFLAGS = $(LFLAGS_GLIB) 
 
 OBJECTS = bin/decode.o bin/memory.o bin/mmu.o bin/cpu.o bin/dump.o bin/interrupts.o bin/lookup.o bin/dma.o bin/pio.o bin/mkcontext.o
-OBJECTS_HW = bin/hw/vagc.o bin/hw/devm.o bin/hw/vkbc.o bin/hw/vtimer.o
+OBJECTS_HW = bin/hw/devm.o
 
 COMMON_SRC = src/common/macros.h src/common/definitions.h src/common/rawdefs.h src/common/types.h Makefile 
 
@@ -51,17 +51,11 @@ bin/pio.o: src/cpu/pio.c src/cpu/pio.h $(COMMON_SRC)
 bin/mkcontext.o: src/mkcontext.c src/mkcontext.h $(COMMON_SRC)
 	${CC} -c -o bin/mkcontext.o src/mkcontext.c $(CFLAGS) $(LFLAGS)
 
-bin/hw/vagc.o: src/hw/vagc.c src/hw/vagc.h $(COMMON_SRC)
-	${CC} -c -o bin/hw/vagc.o src/hw/vagc.c $(CFLAGS) $(LFGLAS)
-
 bin/hw/devm.o: src/hw/devm.c src/hw/devm.h $(COMMON_SRC)
 	${CC} -c -o bin/hw/devm.o src/hw/devm.c $(CFLAGS) $(LFGLAS)
 
-bin/hw/vkbc.o: src/hw/vkbc.c src/hw/vkbc.h $(COMMON_SRC)
-	${CC} -c -o bin/hw/vkbc.o src/hw/vkbc.c $(CFLAGS) $(LFGLAS)
-
-bin/hw/vtimer.o: src/hw/vtimer.c src/hw/vtimer.h $(COMMON_SRC)
-	${CC} -c -o bin/hw/vtimer.o src/hw/vtimer.c $(CFLAGS) $(LFGLAS)
+bin/lib_vasmdis.o: src/disassembler/lib_vasmdis.c src/disassembler/lib_vasmdis.h
+	${CC} -c -o bin/lib_vasmdis.o src/disassembler/lib_vasmdis.c -Isrc/ $(CFLAGS_GLIB) $(LFLAGS_GLIB)
 
 va: $(OBJECTS) $(OBJECTS_HW) bin/emulator.o bin/lib_vasmdis.o 
 	${CC} -o va bin/emulator.o $(OBJECTS) $(OBJECTS_HW) bin/lib_vasmdis.o $(CFLAGS) $(LFLAGS)

@@ -35,8 +35,6 @@
 #include "pio.h"
 #include "disassembler/lib_vasmdis.h"
 
-#include "hw/vagc.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>

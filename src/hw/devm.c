@@ -27,14 +27,6 @@
  */
 
 #include "devm.h"
-#include "vagc.h"
-#include "vkbc.h"
-#include "vtimer.h"
-#include "SDL/SDL.h"
 
 void dev_init_devices(emulator_context* ectx) {
-	SDL_Init(SDL_INIT_EVERYTHING);
-	vagc_init();
-	vkbc_init(ectx);
-	vtimer_init(ectx);
 }

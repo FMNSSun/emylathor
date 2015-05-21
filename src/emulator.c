@@ -25,7 +25,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "dma.h"
 #include "pio.h"
 #include "mkcontext.h"
-#include "hw/vagc.h"
 #include "hw/devm.h"
 
 #include <stdlib.h>
