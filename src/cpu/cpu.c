@@ -30,8 +30,6 @@
 #include "decode.h"
 #include "memory.h"
 #include "dump.h"
-#include "interrupts.h"
-#include "dma.h"
 #include "pio.h"
 #include "disassembler/lib_vasmdis.h"
 
@@ -56,10 +54,6 @@ _va_cpu int cpu_execute(emulator_context* ectx, int step) {
 		#if DUMP_ALL || DUMP_CPU
 		PUTLOG(ectx,"[CPU] IP := %08x", ectx->cpu_context->pos);
 		#endif
-
-		if(__builtin_expect(cctx->int_present,0))
-			if(int_enabled(ectx)) //Only if hardware interrupts are enabled
-				int_handle_interrupt(int_icu_get(ectx), ectx);
 	
 		instruction_context* ins = dec_fetch_ins(ectx);
 
@@ -165,17 +159,8 @@ _va_cpu int cpu_execute(emulator_context* ectx, int step) {
 			case OP_IN:
 				ins_in(ins, ectx);
 				break;
-			case OP_INT:
-			  	ins_int(ins, ectx);
-				break;
-			case OP_IRET:
-				int_handle_return(ectx);
-				break;
 			case OP_JMP:
 				ins_jmp(ins, ectx);
-				break;
-			case OP_LOADAS:
-				ins_loadas(ins, ectx);
 				break;
 			case OP_LOADI:
 				ins_loadi(ins, ectx);
@@ -247,9 +232,6 @@ _va_cpu int cpu_execute(emulator_context* ectx, int step) {
 				return 0;
 			case OP_SUB:
 				ins_sub(ins, ectx);
-				break;
-			case OP_STOREAS:
-				ins_storeas(ins, ectx);
 				break;
 			case OP_STOREID:
 				ins_storeid(ins, ectx);
@@ -344,13 +326,8 @@ _va_cpu void cpu_set_word_reg(byte reg, word val, dword* regs) {
 
 _va_cpu int cpu_push_dword(dword* reg, dword val, emulator_context* ectx) {
 
-	if(!mem_write_dword_v(val, *reg, ectx)) {
+	if(!mem_write_dword_p(val, *reg, ectx)) {
 		return 0;
-	}
-
-	if(*reg < 4) {
-		int_fire_interrupt(INT_EXC_ADDROVERF, ectx);
-		return 1;
 	}
 
 	*reg -=4;
@@ -362,14 +339,9 @@ _va_cpu int cpu_pop_dword(dword* reg, dword* val, emulator_context* ectx) {
 	
 	dword sp = *reg;
 
-	if(*reg >= (DWORD_MAX - 4)) {
-		int_fire_interrupt(INT_EXC_ADDROVERF, ectx);
-		return 1;
-	}
-
 	*reg += 4;
 
-	if(!mem_get_dword_v(*reg, val, ectx)) {
+	if(!mem_get_dword_p(*reg, val, ectx)) {
 		*reg = sp;
 		return 0;
 	}
@@ -480,14 +452,14 @@ _va_ins void ins_cmpxchg(instruction_context* ins, emulator_context* ectx) {
 	if(ins->prefix == PREFIX_DWORD) {
 		dword memValue;
 		
-		int success = mem_get_dword_v(dest, &memValue, ectx);
+		int success = mem_get_dword_p(dest, &memValue, ectx);
 		if(!success) return;
 		
 		dword a = cctx->regs[ins->opa];
 		dword b = cctx->regs[ins->opb];
 		
 		if(memValue == a) {
-			success = mem_write_dword_v(b, dest, ectx);
+			success = mem_write_dword_p(b, dest, ectx);
 			if(!success) return;
 			cctx->regs[CPU_REG_FLGS] |= FLGS_Z;
 			
@@ -511,7 +483,6 @@ _va_ins void ins_div(instruction_context* ins, emulator_context* ectx) {
 		b = cctx->regs[ins->opb];
 
 	if(b == 0u) {
-		int_fire_interrupt(0u, ectx);
 		return;
 	}
 
@@ -521,22 +492,7 @@ _va_ins void ins_div(instruction_context* ins, emulator_context* ectx) {
 _va_ins void ins_in(instruction_context* ins, emulator_context* ectx) {
 	cpu_context* cctx = ectx->cpu_context;
 
-	if(!(cctx->cregs[CPU_CREG_CR1] & CR1_PRIV_MODE)) {
-		int_fire_interrupt(INT_EXC_PROTFAULT, ectx);
-		return;
-	}
-
 	cctx->regs[ins->opa] = pio_read(cctx->regs[ins->opb & 0x7Fu], ectx);
-}
-
-_va_ins void ins_int(instruction_context* ins, emulator_context* ectx) {
-	word no = ins->imm16;
-	no &= 0x00FFu;
-
-	if(!((no >= INT_SW_MIN) && (no <= INT_SW_MAX))) {
-		int_fire_interrupt(INT_EXC_ILLEGALOP, ectx);
-	} 
-	else int_fire_interrupt(no, ectx);
 }
 
 _va_ins void ins_jmp(instruction_context* ins, emulator_context* ectx) {
@@ -546,17 +502,6 @@ _va_ins void ins_jmp(instruction_context* ins, emulator_context* ectx) {
 		cctx->pos += SIGNED16(ins->imm16);
 	else
 		cctx->pos = cctx->regs[ins->dst];
-}
-
-_va_ins void ins_loadas(instruction_context* ins, emulator_context* ectx) {
-	cpu_context* cctx = ectx->cpu_context;
-
-	if(!(cctx->cregs[CPU_CREG_CR1] & CR1_PRIV_MODE)) {
-		int_fire_interrupt(INT_EXC_PROTFAULT, ectx);
-		return;
-	}
-
-	cpu_pop_dword(&(cctx->cregs[CPU_CREG_SSP]), &(cctx->regs[ins->dst]), ectx);
 }
 
 _va_ins void ins_loadi(instruction_context* ins, emulator_context* ectx) {
@@ -574,14 +519,13 @@ _va_ins void ins_loadid(instruction_context* ins, emulator_context* ectx) {
 	cpu_context* cctx = ectx->cpu_context;
 
 	if((qword)((qword)cctx->regs[ins->opa] + (qword)ins->imm12) > DWORD_MAX) {
-		int_fire_interrupt(3u, ectx);
 		return;
 	}
 
 	if(ins->prefix == PREFIX_DWORD) {
 		dword data;
 
-		if(!mem_get_dword_v(cctx->regs[ins->opa] + ins->imm12, &data, ectx))
+		if(!mem_get_dword_p(cctx->regs[ins->opa] + ins->imm12, &data, ectx))
 			return;
 
 		cctx->regs[ins->dst] = data;
@@ -589,7 +533,7 @@ _va_ins void ins_loadid(instruction_context* ins, emulator_context* ectx) {
 	else if(ins->prefix == PREFIX_WORD) {
 		word data;
 
-		if(!mem_get_word_v(cctx->regs[ins->opa] + ins->imm12, &data, ectx))
+		if(!mem_get_word_p(cctx->regs[ins->opa] + ins->imm12, &data, ectx))
 			return;
 
 		cpu_set_word_reg(ins->dst, data, cctx->regs);
@@ -597,7 +541,7 @@ _va_ins void ins_loadid(instruction_context* ins, emulator_context* ectx) {
 	else if(ins->prefix == PREFIX_BYTE) {
 		byte data;
 
-		if(!mem_get_byte_v(cctx->regs[ins->opa] + ins->imm12, &data, ectx))
+		if(!mem_get_byte_p(cctx->regs[ins->opa] + ins->imm12, &data, ectx))
 			return;
 
 		cpu_set_byte_reg(ins->dst, data, cctx->regs);
@@ -642,7 +586,6 @@ _va_ins void ins_loadrd(instruction_context* ins, emulator_context* ectx) {
 	sqword ofs = (sqword)SIGNED32(cctx->regs[ins->opb]);
 
 	if((opa + ofs) > DWORD_MAX || (opa + ofs) < 0) {
-		int_fire_interrupt(3u, ectx);
 		return;
 	}
 
@@ -650,19 +593,19 @@ _va_ins void ins_loadrd(instruction_context* ins, emulator_context* ectx) {
 	
 	if(ins->prefix == PREFIX_DWORD) {
 		dword data;
-		if(!mem_get_dword_v(cctx->regs[ins->opa] + disp, &data, ectx))
+		if(!mem_get_dword_p(cctx->regs[ins->opa] + disp, &data, ectx))
 			return;
 		regs[ins->dst] = data;
 	}
 	else if(ins->prefix == PREFIX_WORD) {
 		word data;
-		if(!mem_get_word_v(cctx->regs[ins->opa] + disp, &data, ectx))
+		if(!mem_get_word_p(cctx->regs[ins->opa] + disp, &data, ectx))
 			return;
 		cpu_set_word_reg(ins->dst, data, regs);
 	}
 	else if(ins->prefix == PREFIX_BYTE) {
 		byte data;
-		if(!mem_get_byte_v(cctx->regs[ins->opa] + disp, &data, ectx))
+		if(!mem_get_byte_p(cctx->regs[ins->opa] + disp, &data, ectx))
 			return;
 		cpu_set_byte_reg(ins->dst, data, regs);
 	}
@@ -676,7 +619,6 @@ _va_ins void ins_mod(instruction_context* ins, emulator_context* ectx){
 	dword value = cctx->regs[ins->opa];
 	
 	if(modulo == 0){
-		int_fire_interrupt(0u, ectx);	
 		return;			
 	}
 	
@@ -713,27 +655,12 @@ _va_ins void ins_mov(instruction_context* ins, emulator_context* ectx) {
 
 _va_ins void ins_movfc(instruction_context* ins, emulator_context* ectx) {
 	cpu_context* cctx = ectx->cpu_context;
-
-	if(!(cctx->cregs[CPU_CREG_CR1] & CR1_PRIV_MODE)) {
-		int_fire_interrupt(INT_EXC_PROTFAULT, ectx);
-		return;
-	}
-
 	cctx->regs[ins->opa] = cctx->cregs[ins->opb];
 }
 
 _va_ins void ins_movtc(instruction_context* ins, emulator_context* ectx) {
 	cpu_context* cctx = ectx->cpu_context;
-
-	if(!(cctx->cregs[CPU_CREG_CR1] & CR1_PRIV_MODE)) {
-		int_fire_interrupt(INT_EXC_PROTFAULT, ectx);
-		return;
-	}
-
 	cctx->cregs[ins->opa] = cctx->regs[ins->opb];
-
-	if(cctx->cregs[CPU_CREG_CR1] & CR1_INT_ENABLED) //reload ITT cache in ITU
-		int_reload_itt(ectx);
 }
 
 _va_ins void ins_mul(instruction_context* ins, emulator_context* ectx) {
@@ -782,11 +709,6 @@ _va_ins void ins_out(instruction_context* ins, emulator_context* ectx) {
 	cpu_context* cctx = ectx->cpu_context;
 
 	dword* regs = cctx->regs;
-
-	if(!(cctx->cregs[CPU_CREG_CR1] & CR1_PRIV_MODE)) {
-		int_fire_interrupt(INT_EXC_PROTFAULT, ectx);
-		return;
-	}
 
 	pio_write(regs[ins->opa] & 0x7Fu, regs[ins->opb], ectx);
 }
@@ -855,7 +777,6 @@ _va_ins void ins_sdiv(instruction_context* ins, emulator_context* ectx) {
 		b = cctx->regs[ins->opb];
 
 	if(b == 0u) {
-		int_fire_interrupt(0u, ectx);
 		return;
 	}
 
@@ -988,42 +909,30 @@ _va_ins void ins_sub(instruction_context* ins, emulator_context* ectx) {
 		cctx->regs[CPU_REG_FLGS] &= ~FLGS_C;
 }
 
-_va_ins void ins_storeas(instruction_context* ins, emulator_context* ectx) {
-	cpu_context* cctx = ectx->cpu_context;
-
-	if(!(cctx->cregs[CPU_CREG_CR1] & CR1_PRIV_MODE)) {
-		int_fire_interrupt(INT_EXC_PROTFAULT, ectx);
-		return;
-	}
-
-	cpu_push_dword(&(cctx->cregs[CPU_CREG_SSP]), cctx->regs[ins->dst], ectx);
-}
-
 _va_ins void ins_storeid(instruction_context* ins, emulator_context* ectx) {
 	cpu_context* cctx = ectx->cpu_context;
 
 	if((qword)((qword)cctx->regs[ins->dst] + (qword)ins->imm12) > DWORD_MAX) {
-		int_fire_interrupt(3u, ectx);
 		return;
 	}
 
 	if(ins->prefix == PREFIX_DWORD) {
 
-		if(!mem_write_dword_v(cctx->regs[ins->opa], cctx->regs[ins->dst] + ins->imm12, ectx))
+		if(!mem_write_dword_p(cctx->regs[ins->opa], cctx->regs[ins->dst] + ins->imm12, ectx))
 			return;
 
 	} else if(ins->prefix == PREFIX_BYTE) {
 
 		byte b = cpu_get_byte_reg(ins->opa, cctx->regs);
 
-		if(!mem_write_byte_v(b, cctx->regs[ins->dst] + ins->imm12, ectx))
+		if(!mem_write_byte_p(b, cctx->regs[ins->dst] + ins->imm12, ectx))
 			return;
 
 	} else if(ins->prefix == PREFIX_WORD) {
 
 		word w = cpu_get_word_reg(ins->opa, cctx->regs);
 
-		if(!mem_write_word_v(w, cctx->regs[ins->dst] + ins->imm12, ectx))
+		if(!mem_write_word_p(w, cctx->regs[ins->dst] + ins->imm12, ectx))
 			return;
 
 	}
@@ -1063,7 +972,6 @@ _va_ins void ins_storerd(instruction_context* ins, emulator_context* ectx) {
 	sqword ofs = (sqword)SIGNED32(cctx->regs[ins->opb]);
 
 	if((dst + ofs) > DWORD_MAX || (dst + ofs) < 0) {
-		int_fire_interrupt(3u, ectx);
 		return;
 	}
 
@@ -1071,21 +979,21 @@ _va_ins void ins_storerd(instruction_context* ins, emulator_context* ectx) {
 
 	if(ins->prefix == PREFIX_DWORD) {
 
-		if(!mem_write_dword_v(cctx->regs[ins->opa], cctx->regs[ins->dst] + disp, ectx))
+		if(!mem_write_dword_p(cctx->regs[ins->opa], cctx->regs[ins->dst] + disp, ectx))
 			return;
 
 	} else if(ins->prefix == PREFIX_BYTE) {
 
 		byte b = cpu_get_byte_reg(ins->opa, cctx->regs);
 
-		if(!mem_write_byte_v(b, cctx->regs[ins->dst] + disp, ectx))
+		if(!mem_write_byte_p(b, cctx->regs[ins->dst] + disp, ectx))
 			return;
 
 	} else if(ins->prefix == PREFIX_WORD) {
 
 		word w = cpu_get_word_reg(ins->opa, cctx->regs);
 
-		if(!mem_write_word_v(w, cctx->regs[ins->dst] + disp, ectx))
+		if(!mem_write_word_p(w, cctx->regs[ins->dst] + disp, ectx))
 			return;
 
 	}
@@ -1136,11 +1044,6 @@ _va_ins void ins_xchg(instruction_context* ins, emulator_context* ectx) {
 
 _va_ins void ins_xchgc(instruction_context* ins, emulator_context* ectx) {
 	cpu_context* cctx = ectx->cpu_context;
-	
-	if(!(cctx->cregs[CPU_CREG_CR1] & CR1_PRIV_MODE)) {
-		int_fire_interrupt(INT_EXC_PROTFAULT, ectx);
-		return;
-	}
 	
 	dword temp = cctx->regs[ins->opa];
 	cctx->regs[ins->opa] = cctx->cregs[ins->opb];

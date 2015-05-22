@@ -27,9 +27,7 @@
  */
 
 #include "mkcontext.h"
-#include "cpu/interrupts.h"
 #include "hw/devm.h"
-#include "cpu/dma.h"
 #include "cpu/pio.h"
 
 #include <stdlib.h>
@@ -93,9 +91,7 @@ emulator_context* emu_create_context(
 	ectx->statistic_context->instruction_count = 0;
 
 	/* Initialize the ITT */
-	for(int i = 0; i < INT_HW_MIN; i++) {
-		ectx->memory_context->memory[INT_ITT + i] = (byte)i;
-	}
+	/* removed */
 
 
 	/* Set up cpu context */
@@ -130,13 +126,12 @@ emulator_context* emu_create_context(
 	}
 
 	/* No interrupts yet, please */
-	ectx->cpu_context->ints = ecalloc(INT_HW_MIN, sizeof(byte));
+	ectx->cpu_context->ints = ecalloc(0, sizeof(byte));
 
 	ectx->cpu_context->int_present = 0;
 
 	/* Set up dma context */
-	ectx->dma_context = emalloc(sizeof(dma_context));
-	ectx->dma_context->transfers = g_async_queue_new();
+	/* removed */
 
 	ectx->logbuffer = emalloc(sizeof(char) * 512);
 	ectx->logbuffer_size = 512;
@@ -147,16 +142,6 @@ emulator_context* emu_create_context(
 
 emulator_context* emu_init() {
 	emulator_context* ectx = emu_create_context(0, 0, 0);
-
-	// Start DMA thread
-	
-	#if !GLIB_CHECK_VERSION(2,32,0)
-	GThread* dmat = g_thread_create(dma_background, ectx, FALSE, NULL);
-	#else
-	GThread* dmat = g_thread_new("dma_thread",dma_background, ectx);
-	#endif
-	
-	(void)dmat;
 
 	pio_init();
 	dev_init_devices(ectx);

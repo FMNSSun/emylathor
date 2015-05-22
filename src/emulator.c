@@ -22,7 +22,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "emulator.h"
 #include "cpu.h"
 #include "memory.h"
-#include "dma.h"
 #include "pio.h"
 #include "mkcontext.h"
 #include "hw/devm.h"

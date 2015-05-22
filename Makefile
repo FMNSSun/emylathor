@@ -7,7 +7,7 @@ CFLAGS = -std=gnu99 -pedantic -Wall -Werror -Isrc/ $(CFLAGS_GLIB) -O3 -DDUMP_INT
 
 LFLAGS = $(LFLAGS_GLIB) 
 
-OBJECTS = bin/decode.o bin/memory.o bin/mmu.o bin/cpu.o bin/dump.o bin/interrupts.o bin/lookup.o bin/dma.o bin/pio.o bin/mkcontext.o
+OBJECTS = bin/decode.o bin/memory.o bin/cpu.o bin/dump.o bin/lookup.o bin/pio.o bin/mkcontext.o
 OBJECTS_HW = bin/hw/devm.o
 
 COMMON_SRC = src/common/macros.h src/common/definitions.h src/common/rawdefs.h src/common/types.h Makefile 
@@ -18,17 +18,8 @@ bin/decode.o: src/cpu/decode.c src/cpu/decode.h $(COMMON_SRC)
 bin/memory.o: src/cpu/memory.c src/cpu/memory.h $(COMMON_SRC)
 	${CC} -c -o bin/memory.o src/cpu/memory.c $(CFLAGS) $(LFLAGS)
 
-bin/mmu.o: src/cpu/mmu.c src/cpu/mmu.h $(COMMON_SRC)
-	${CC} -c -o bin/mmu.o src/cpu/mmu.c $(CFLAGS) $(LFLAGS)
-
-bin/dma.o: src/cpu/dma.c src/cpu/dma.h $(COMMON_SRC)
-	${CC} -c -o bin/dma.o src/cpu/dma.c $(CFLAGS) $(LFLAGS)
-
 bin/cpu.o: src/cpu/cpu.c src/cpu/cpu.h $(COMMON_SRC)
 	${CC} -c -o bin/cpu.o src/cpu/cpu.c $(CFLAGS) $(LFLAGS)
-
-bin/interrupts.o: src/cpu/interrupts.c src/cpu/interrupts.h $(COMMON_SRC)
-	${CC} -c -o bin/interrupts.o src/cpu/interrupts.c $(CFLAGS) $(LFLAGS)
 
 bin/emulator.o: src/emulator.c src/emulator.h $(COMMON_SRC)
 	${CC} -c -o bin/emulator.o src/emulator.c $(CFLAGS) $(LFLAGS) -Isrc/cpu/

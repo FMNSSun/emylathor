@@ -47,7 +47,7 @@ _va_dec instruction_context* dec_fetch_ins(emulator_context* ectx) {
 
 	cpu_context* cctx = ectx->cpu_context;
 
-	if(!mem_get_instruction_v(cctx->pos, &idata, ectx))
+	if(!mem_get_instruction_p(cctx->pos, &idata, ectx))
 		return NULL;
 
 	cctx->pos += 4; //advance instruction pointer
